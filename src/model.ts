@@ -7,28 +7,49 @@ export class OrderLine {
 }
 
 export class Batch {
-  readonly ref: string;
-  readonly sku: string;
-  availableQuantity: number;
-  eta?: Date;
+  public readonly ref: string;
+  public readonly sku: string;
+  public eta?: Date;
+
+  private _purchasedQuantity: number;
+  private _allocations: Set<OrderLine>;
 
   constructor(
     batchRef: string,
     batchSku: string,
-    availableQuantity: number,
+    quantity: number,
     eta?: Date
   ) {
     this.ref = batchRef;
     this.sku = batchSku;
-    this.availableQuantity = availableQuantity;
     this.eta = eta;
+    this._purchasedQuantity = quantity;
+    this._allocations = new Set();
   }
 
   public allocate(line: OrderLine) {
-    this.availableQuantity -= line.quantity;
+    if (this.canAllocate(line)) {
+      this._allocations.add(line);
+    }
   }
 
   public canAllocate(line: OrderLine): boolean {
     return this.sku === line.sku && this.availableQuantity >= line.quantity;
+  }
+
+  get allocatedQuantity(): number {
+    return Array.from(this._allocations)
+      .map((line) => line.quantity)
+      .reduce((previous, current) => previous + current, 0);
+  }
+
+  get availableQuantity() {
+    return this._purchasedQuantity - this.allocatedQuantity;
+  }
+
+  public deallocate(line: OrderLine) {
+    if (this._allocations.has(line)) {
+      this._allocations.delete(line);
+    }
   }
 }

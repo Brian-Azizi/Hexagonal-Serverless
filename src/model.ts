@@ -27,4 +27,8 @@ export class Batch {
   public allocate(line: OrderLine) {
     this.availableQuantity -= line.quantity;
   }
+
+  public canAllocate(line: OrderLine): boolean {
+    return this.sku === line.sku && this.availableQuantity >= line.quantity;
+  }
 }

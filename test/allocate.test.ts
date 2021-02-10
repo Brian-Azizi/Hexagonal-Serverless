@@ -1,4 +1,4 @@
-import { Batch, OrderLine, allocate } from "../src/model";
+import { Batch, OrderLine, allocate, OutOfStockError } from "../src/model";
 import { today, tomorrow, later } from "./dateUtils";
 
 describe("allocate", () => {
@@ -53,5 +53,18 @@ describe("allocate", () => {
 
     const allocation = allocate(line, [shipmentBatch, inStockBatch]);
     expect(allocation).toBe(inStockBatch.reference);
+  });
+
+  it("throws an OutOfStockError if it cannot allocate", () => {
+    const batch = new Batch("batch1", "SMALL-FORK", 10, today());
+    allocate(new OrderLine("order1", "SMALL-FORK", 10), [batch]);
+
+    expect.assertions(2);
+    try {
+      allocate(new OrderLine("order1", "SMALL-FORK", 10), [batch]);
+    } catch (e) {
+      expect(e).toBeInstanceOf(OutOfStockError);
+      expect(e.message).toContain("SMALL-FORK");
+    }
   });
 });

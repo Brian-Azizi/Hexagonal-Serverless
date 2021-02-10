@@ -60,6 +60,20 @@ export function allocate(line: OrderLine, batches: Batch[]): string {
     .filter((b) => b.canAllocate(line))
     .sort(Batch.sortByEta)[0];
 
+  if (batch === undefined) {
+    throw new OutOfStockError(`Out of stock for sku ${line.sku}`);
+  }
+
   batch.allocate(line);
   return batch.reference;
+}
+
+export class OutOfStockError extends Error {
+  public readonly rootError?: Error;
+
+  public constructor(message: string, rootError?: Error) {
+    super(message);
+    this.name = "OutOfStockError";
+    this.rootError = rootError;
+  }
 }

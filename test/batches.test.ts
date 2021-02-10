@@ -1,4 +1,5 @@
 import { Batch, OrderLine } from "../src/model";
+import { today } from "./dateUtils";
 
 const makeBatchAndLine = (
   sku: string,
@@ -12,7 +13,7 @@ const makeBatchAndLine = (
 describe("Batch", () => {
   describe("allocating lines", () => {
     it("reduces the available quantity", () => {
-      const batch = new Batch("batch-001", "SMALL-TABLE", 20, new Date());
+      const batch = new Batch("batch-001", "SMALL-TABLE", 20, today());
       const line = new OrderLine("order-ref", "SMALL-TABLE", 2);
 
       batch.allocate(line);

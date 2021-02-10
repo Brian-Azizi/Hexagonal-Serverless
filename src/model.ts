@@ -7,20 +7,21 @@ export class OrderLine {
 }
 
 export class Batch {
-  public readonly ref: string;
+  public readonly reference: string;
   public readonly sku: string;
   public eta?: Date;
 
   private _purchasedQuantity: number;
   private _allocations: Set<OrderLine>;
 
-  constructor(
-    batchRef: string,
-    batchSku: string,
-    quantity: number,
-    eta?: Date
-  ) {
-    this.ref = batchRef;
+  public static sortByEta(left: Batch, right: Batch): number {
+    if (!left.eta) return -1;
+    else if (!right.eta) return 1;
+    return left.eta.getTime() - right.eta.getTime();
+  }
+
+  constructor(ref: string, batchSku: string, quantity: number, eta?: Date) {
+    this.reference = ref;
     this.sku = batchSku;
     this.eta = eta;
     this._purchasedQuantity = quantity;
@@ -52,4 +53,13 @@ export class Batch {
       this._allocations.delete(line);
     }
   }
+}
+
+export function allocate(line: OrderLine, batches: Batch[]): string {
+  const batch = batches
+    .filter((b) => b.canAllocate(line))
+    .sort(Batch.sortByEta)[0];
+
+  batch.allocate(line);
+  return batch.reference;
 }

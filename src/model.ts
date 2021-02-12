@@ -11,8 +11,9 @@ export class Batch {
   public readonly sku: string;
   public eta?: Date;
 
-  private _purchasedQuantity: number;
-  private _allocations: Set<OrderLine>;
+  readonly purchasedQuantity: number;
+
+  private allocations: Set<OrderLine>;
 
   public static sortByEta(left: Batch, right: Batch): number {
     if (!left.eta) return -1;
@@ -24,13 +25,13 @@ export class Batch {
     this.reference = ref;
     this.sku = batchSku;
     this.eta = eta;
-    this._purchasedQuantity = quantity;
-    this._allocations = new Set();
+    this.purchasedQuantity = quantity;
+    this.allocations = new Set();
   }
 
   public allocate(line: OrderLine) {
     if (this.canAllocate(line)) {
-      this._allocations.add(line);
+      this.allocations.add(line);
     }
   }
 
@@ -39,18 +40,18 @@ export class Batch {
   }
 
   get allocatedQuantity(): number {
-    return Array.from(this._allocations)
+    return Array.from(this.allocations)
       .map((line) => line.quantity)
       .reduce((previous, current) => previous + current, 0);
   }
 
   get availableQuantity() {
-    return this._purchasedQuantity - this.allocatedQuantity;
+    return this.purchasedQuantity - this.allocatedQuantity;
   }
 
   public deallocate(line: OrderLine) {
-    if (this._allocations.has(line)) {
-      this._allocations.delete(line);
+    if (this.allocations.has(line)) {
+      this.allocations.delete(line);
     }
   }
 }

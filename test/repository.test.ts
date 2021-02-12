@@ -1,32 +1,37 @@
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import { Batch } from "../src/model";
+import { DynamoDbRepository } from "../src/repository";
+import { InMemoryDocumentClient } from "../src/documentClient";
 
-const docClient = new DocumentClient({
-  apiVersion: "2012-08-10",
-  region: "eu-west-1",
-});
+describe("DynamoDbRepository", () => {
+  let docClient: InMemoryDocumentClient;
+  beforeAll(() => {
+    docClient = new InMemoryDocumentClient();
+  });
 
-describe("DynamoRepository", () => {
   it("can save a batch", async () => {
-    const batch = new Batch("batch1", "RUSTY-SOAPDISH", 100);
+    const batch = new Batch(
+      "batch01",
+      "RUSTY-SOAPDISH",
+      100,
+      new Date(Date.UTC(2021, 3, 20))
+    );
+    const repo = new DynamoDbRepository(docClient);
+    await repo.add(batch);
 
-    // const repo = new DynamoRepository();
-    // await repo.add(batch);
-
-    var params = {
-      TableName: "Batches",
-    };
-    const { Items } = await docClient.scan(params).promise();
+    const { Items } = await docClient
+      .scan({
+        TableName: "Batches",
+      })
+      .promise();
     expect(Items).toStrictEqual([
       {
-        eta: "2021-04-20",
-        id: "test01",
-        purchased_quantity: 100,
-        reference: "batch01",
-        sku: "RUSTY-SOAPDISH",
+        Eta: "2021-04-20",
+        PurchasedQuantity: 100,
+        Reference: "batch01",
+        Sku: "RUSTY-SOAPDISH",
       },
     ]);
-  }, 30000);
+  });
 
   it("can retrieve a batch with allocations", () => {});
 });

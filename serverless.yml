@@ -1,0 +1,17 @@
+service: allocations
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: eu-west-1
+
+functions:
+  allocate:
+    handler: src/api.allocate
+    events:
+      - http:
+          path: /allocate
+          method: post
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline

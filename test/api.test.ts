@@ -53,7 +53,6 @@ describe("Allocations API", () => {
 
     const requestData = { orderId: uuid.v4(), sku, quantity: 3 };
     const response = await axios.post(`${url}/allocate`, requestData);
-    console.log(response.data);
     expect(response.status).toBe(201);
     expect(response.data["batchref"]).toBe(earlyBatch);
   });

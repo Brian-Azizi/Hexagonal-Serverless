@@ -7,11 +7,39 @@ abstract class AbstractRepository {
   ): Batch | undefined | Promise<Batch | undefined>;
 }
 
+interface DynamoOrderLine {
+  OrderId: string;
+  Sku: string;
+  Quantity: number;
+}
+interface DynamoBatch {
+  PK: string;
+  SK: string;
+  Reference: string;
+  Sku: string;
+  PurchasedQuantity: number;
+  Eta: "NONE" | string;
+  Allocations: DynamoOrderLine[];
+}
 export class DynamoDbRepository extends AbstractRepository {
   private readonly TABLE_NAME = "Allocations";
 
   constructor(private readonly documentClient: DynamoDbDocumentClient) {
     super();
+  }
+
+  private createBatchFromDynamoItem(item: DynamoBatch): Batch {
+    return new Batch(
+      item?.Reference,
+      item?.Sku,
+      item?.PurchasedQuantity,
+      item?.Eta === "NONE" ? undefined : new Date(item?.Eta),
+      new Set(
+        item?.Allocations.map(
+          (line) => new OrderLine(line.OrderId, line.Sku, line.Quantity)
+        )
+      )
+    );
   }
 
   public async add(batch: Batch): Promise<void> {
@@ -38,7 +66,7 @@ export class DynamoDbRepository extends AbstractRepository {
   }
 
   public async get(reference: string): Promise<Batch | undefined> {
-    const { Items: batchItems } = await this.documentClient
+    const { Items } = await this.documentClient
       .query({
         TableName: this.TABLE_NAME,
         KeyConditionExpression: "PK = :pk",
@@ -47,19 +75,9 @@ export class DynamoDbRepository extends AbstractRepository {
         },
       })
       .promise();
-    const batchData = batchItems && batchItems[0];
-    return new Batch(
-      batchData?.Reference,
-      batchData?.Sku,
-      batchData?.PurchasedQuantity,
-      batchData?.Eta === "NONE" ? undefined : new Date(batchData?.Eta),
-      new Set(
-        batchData?.Allocations.map(
-          (line: { OrderId: string; Sku: string; Quantity: number }) =>
-            new OrderLine(line.OrderId, line.Sku, line.Quantity)
-        )
-      )
-    );
+
+    if (!Items) return undefined;
+    return this.createBatchFromDynamoItem(Items[0] as DynamoBatch);
   }
 
   public async list(): Promise<Batch[]> {
@@ -69,22 +87,9 @@ export class DynamoDbRepository extends AbstractRepository {
       })
       .promise();
 
-    return (
-      Items?.map(
-        (item) =>
-          new Batch(
-            item.Reference,
-            item.Sku,
-            item.PurchasedQuantity,
-            item?.Eta === "NONE" ? undefined : new Date(item?.Eta),
-            new Set(
-              item?.Allocations.map(
-                (line: { OrderId: string; Sku: string; Quantity: number }) =>
-                  new OrderLine(line.OrderId, line.Sku, line.Quantity)
-              )
-            )
-          )
-      ) || []
+    if (!Items) return [];
+    return Items.map((item) =>
+      this.createBatchFromDynamoItem(item as DynamoBatch)
     );
   }
 }

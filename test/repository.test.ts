@@ -84,8 +84,9 @@ describe("DynamoDbRepository", () => {
       .promise();
 
     const repo = new DynamoDbRepository(docClient);
-    const retrieved = await repo.get("batch02");
+    const retrieved = <Batch>await repo.get("batch02");
 
+    expect(retrieved).toBeDefined();
     expect(retrieved.reference).toBe("batch02");
     expect(retrieved.sku).toBe("VELVET-SOFA");
     expect(retrieved.purchasedQuantity).toBe(20);

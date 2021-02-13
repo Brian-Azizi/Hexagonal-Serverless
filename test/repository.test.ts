@@ -1,12 +1,12 @@
+import { DynamoDbDocumentClient } from "../src/documentClient";
 import { Batch, OrderLine } from "../src/model";
 import { DynamoDbRepository } from "../src/repository";
-import { InMemoryDocumentClient } from "../src/documentClient";
 import { emptyTable } from "./utils";
 
 describe("DynamoDbRepository", () => {
-  let docClient: InMemoryDocumentClient;
+  let docClient: DynamoDbDocumentClient;
   beforeAll(() => {
-    docClient = new InMemoryDocumentClient();
+    docClient = new DynamoDbDocumentClient();
   });
   beforeEach(async (done) => {
     await emptyTable(docClient);
@@ -114,15 +114,17 @@ describe("DynamoDbRepository", () => {
     const repo = new DynamoDbRepository(docClient);
     const retrieved = await repo.list();
 
-    expect(retrieved).toStrictEqual([
-      new Batch(
-        "batch02",
-        "VELVET-SOFA",
-        20,
-        undefined,
-        new Set([new OrderLine("order-001", "VELVET-SOFA", 17)])
-      ),
-      new Batch("batch01", "VELVET-SOFA", 20, new Date("2022-01-01")),
-    ]);
+    expect(retrieved.sort(Batch.sortByEta)).toStrictEqual(
+      [
+        new Batch(
+          "batch02",
+          "VELVET-SOFA",
+          20,
+          undefined,
+          new Set([new OrderLine("order-001", "VELVET-SOFA", 17)])
+        ),
+        new Batch("batch01", "VELVET-SOFA", 20, new Date("2022-01-01")),
+      ].sort(Batch.sortByEta)
+    );
   });
 });

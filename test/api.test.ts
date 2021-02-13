@@ -1,11 +1,10 @@
-import { InMemoryDocumentClient } from "../src/documentClient";
-import { emptyTable } from "./utils";
 import axios from "axios";
 import * as uuid from "uuid";
+import * as config from "../config";
+import { DynamoDbDocumentClient } from "../src/documentClient";
+import { emptyTable } from "./utils";
 
-const url = "http://localhost:3000/dev";
-
-const addStock = (docClient: InMemoryDocumentClient) => async (
+const addStock = (docClient: DynamoDbDocumentClient) => async (
   batches: [string, string, number, string][]
 ) => {
   const docClientRequests = batches.map(([ref, sku, qty, eta]) =>
@@ -29,9 +28,9 @@ const addStock = (docClient: InMemoryDocumentClient) => async (
 };
 
 describe("Allocations API", () => {
-  let docClient: InMemoryDocumentClient;
+  let docClient: DynamoDbDocumentClient;
   beforeAll(() => {
-    docClient = new InMemoryDocumentClient();
+    docClient = new DynamoDbDocumentClient();
   });
   beforeEach(async (done) => {
     await emptyTable(docClient);
@@ -52,6 +51,7 @@ describe("Allocations API", () => {
     ]);
 
     const requestData = { orderId: uuid.v4(), sku, quantity: 3 };
+    const url = config.getApiUrl();
     const response = await axios.post(
       `${url}/allocate`,
       JSON.stringify(requestData)

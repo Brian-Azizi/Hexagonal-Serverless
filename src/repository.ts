@@ -1,5 +1,5 @@
-import { Batch, OrderLine } from "./model";
 import { DynamoDbDocumentClient } from "./documentClient";
+import { Batch, OrderLine } from "./model";
 abstract class AbstractRepository {
   public abstract add(batch: Batch): void | Promise<void>;
   public abstract get(

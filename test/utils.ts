@@ -1,4 +1,4 @@
-import { InMemoryDocumentClient } from "../src/documentClient";
+import { DynamoDbDocumentClient } from "../src/documentClient";
 
 export const today = () => {
   const result = new Date();
@@ -20,7 +20,7 @@ export const later = () => {
 };
 
 export async function emptyTable(
-  documentClient: InMemoryDocumentClient
+  documentClient: DynamoDbDocumentClient
 ): Promise<void> {
   const { Items } = await documentClient
     .scan({ TableName: "Allocations" })

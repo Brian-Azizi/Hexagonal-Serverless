@@ -1,12 +1,8 @@
-import { DocumentClient as DynamoDbDocumentClient } from "aws-sdk/clients/dynamodb";
-export { DocumentClient as DynamoDbDocumentClient } from "aws-sdk/clients/dynamodb";
+import { DocumentClient } from "aws-sdk/clients/dynamodb";
+import * as config from "../config";
 
-export class InMemoryDocumentClient extends DynamoDbDocumentClient {
+export class DynamoDbDocumentClient extends DocumentClient {
   constructor() {
-    super({
-      apiVersion: "2012-08-10",
-      region: "eu-west-1",
-      endpoint: "http://localhost:8000",
-    });
+    super(config.getDynamoConfig());
   }
 }

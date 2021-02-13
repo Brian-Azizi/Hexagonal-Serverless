@@ -3,8 +3,9 @@ service: allocations
 provider:
   name: aws
   runtime: nodejs12.x
-  region: eu-west-1
-  iamRoleStatements: # IAM role statements so that services can be accessed in the AWS account
+  region: ${self:custom.region}
+  stage: ${self:custom.stage}
+  iamRoleStatements:
     - Effect: Allow
       Action:
         - dynamodb:Query
@@ -15,6 +16,9 @@ provider:
         - dynamodb:DeleteIte
       Resource:
         - !GetAtt AllocationsTable.Arn
+  environment:
+    apiBaseUrl: ${self:custom.apiBaseUrl.${self:custom.runtimeEnvironment}}
+    dynamoEndpoint: ${self:custom.dynamoEndpoint.${self:custom.runtimeEnvironment}}
 
 plugins:
   - serverless-plugin-typescript
@@ -28,6 +32,22 @@ functions:
       - http:
           path: /allocate
           method: post
+
+custom:
+  region: eu-west-1
+  stage: ${opt:stage, 'dev'}
+  runtimeEnvironment: ${env:RUNTIME_ENV, 'aws'}
+  apiBaseUrl:
+    local: http://localhost:3000/dev
+    aws:
+      Fn::Join:
+        - ""
+        - - "https://"
+          - !Ref ApiGatewayRestApi
+          - ".execute-api.${self:custom.region}.amazonaws.com/${self:custom.stage}"
+  dynamoEndpoint:
+    local: http://localhost:8000
+    aws: https://dynamodb.eu-west-1.amazonaws.com
 
 resources:
   Resources:

@@ -3,17 +3,25 @@ set -e
 docker-compose up -d
 sleep 2
 aws dynamodb create-table \
-    --table-name Batches \
+    --table-name Allocations \
     --attribute-definitions '[
       {
-          "AttributeName": "Reference",
+          "AttributeName": "PK",
+          "AttributeType": "S"
+      },
+      {
+          "AttributeName": "SK",
           "AttributeType": "S"
       }
     ]' \
     --key-schema '[
       {
-          "AttributeName": "Reference",
+          "AttributeName": "PK",
           "KeyType": "HASH"
+      },
+      {
+          "AttributeName": "SK",
+          "KeyType": "SORT"
       }
     ]' \
     --provisioned-throughput '{

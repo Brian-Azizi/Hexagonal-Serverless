@@ -13,7 +13,7 @@ export class Batch {
 
   readonly purchasedQuantity: number;
 
-  private allocations: Set<OrderLine>;
+  readonly allocations: Set<OrderLine>;
 
   public static sortByEta(left: Batch, right: Batch): number {
     if (!left.eta) return -1;
@@ -21,12 +21,18 @@ export class Batch {
     return left.eta.getTime() - right.eta.getTime();
   }
 
-  constructor(ref: string, batchSku: string, quantity: number, eta?: Date) {
+  constructor(
+    ref: string,
+    batchSku: string,
+    quantity: number,
+    eta?: Date,
+    allocations: Set<OrderLine> = new Set()
+  ) {
     this.reference = ref;
     this.sku = batchSku;
     this.eta = eta;
     this.purchasedQuantity = quantity;
-    this.allocations = new Set();
+    this.allocations = allocations;
   }
 
   public allocate(line: OrderLine) {

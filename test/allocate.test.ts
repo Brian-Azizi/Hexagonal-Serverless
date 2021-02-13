@@ -1,5 +1,5 @@
 import { Batch, OrderLine, allocate, OutOfStockError } from "../src/model";
-import { today, tomorrow, later } from "./dateUtils";
+import { today, tomorrow, later } from "./utils";
 
 describe("allocate", () => {
   it("prefers current stock batches to shipments", () => {

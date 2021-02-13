@@ -1,24 +1,7 @@
 import { Batch, OrderLine } from "../src/model";
 import { DynamoDbRepository } from "../src/repository";
 import { InMemoryDocumentClient } from "../src/documentClient";
-
-async function emptyTable(
-  documentClient: InMemoryDocumentClient
-): Promise<void> {
-  const { Items } = await documentClient
-    .scan({ TableName: "Allocations" })
-    .promise();
-
-  const deleteRequests = Items?.map((Item) =>
-    documentClient
-      .delete({
-        TableName: "Allocations",
-        Key: { PK: Item.PK, SK: Item.SK },
-      })
-      .promise()
-  );
-  if (deleteRequests) await Promise.all(deleteRequests);
-}
+import { emptyTable } from "./utils";
 
 describe("DynamoDbRepository", () => {
   let docClient: InMemoryDocumentClient;

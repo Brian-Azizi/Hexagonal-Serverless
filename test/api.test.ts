@@ -3,7 +3,7 @@ import { emptyTable } from "./utils";
 import axios from "axios";
 import * as uuid from "uuid";
 
-const url = "http:/localhost:3000";
+const url = "http://localhost:3000/dev";
 
 const addStock = (docClient: InMemoryDocumentClient) => async (
   batches: [string, string, number, string][]
@@ -53,7 +53,8 @@ describe("Allocations API", () => {
 
     const requestData = { orderId: uuid.v4(), sku, quantity: 3 };
     const response = await axios.post(`${url}/allocate`, requestData);
+    console.log(response.data);
     expect(response.status).toBe(201);
-    expect(response.data).toBe(201);
+    expect(response.data["batchref"]).toBe(earlyBatch);
   });
 });

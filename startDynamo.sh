@@ -21,7 +21,7 @@ aws dynamodb create-table \
       },
       {
           "AttributeName": "SK",
-          "KeyType": "SORT"
+          "KeyType": "RANGE"
       }
     ]' \
     --provisioned-throughput '{

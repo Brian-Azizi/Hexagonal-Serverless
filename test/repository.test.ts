@@ -115,7 +115,6 @@ describe("DynamoDbRepository", () => {
     const retrieved = await repo.list();
 
     expect(retrieved).toStrictEqual([
-      new Batch("batch01", "VELVET-SOFA", 20, new Date("2022-01-01")),
       new Batch(
         "batch02",
         "VELVET-SOFA",
@@ -123,6 +122,7 @@ describe("DynamoDbRepository", () => {
         undefined,
         new Set([new OrderLine("order-001", "VELVET-SOFA", 17)])
       ),
+      new Batch("batch01", "VELVET-SOFA", 20, new Date("2022-01-01")),
     ]);
   });
 });

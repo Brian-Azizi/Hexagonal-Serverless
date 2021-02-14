@@ -1,13 +1,14 @@
 import * as model from "../src/model";
 import { AbstractRepository } from "../src/repository";
 import * as services from "../src/services";
+import { today, tomorrow } from "./utils";
 
 class FakeRepository implements AbstractRepository {
-  private readonly batches: Set<model.Batch>;
+  private readonly batches: { [reference: string]: model.Batch } = {};
   public committed: boolean = false;
 
   constructor(batches: model.Batch[] = []) {
-    this.batches = new Set(batches);
+    batches.forEach((batch) => (this.batches[batch.reference] = batch));
   }
 
   public commit(): void {
@@ -15,17 +16,15 @@ class FakeRepository implements AbstractRepository {
   }
 
   public add(batch: model.Batch): void {
-    this.batches.add(batch);
+    this.batches[batch.reference] = batch;
   }
 
   public get(reference: string): model.Batch | undefined {
-    return Array.from(this.batches).find(
-      (batch) => batch.reference === reference
-    );
+    return this.batches[reference];
   }
 
   public list(): model.Batch[] {
-    return Array.from(this.batches);
+    return Object.values(this.batches);
   }
 }
 
@@ -51,6 +50,23 @@ describe("Allocate service", () => {
       expect(e).toBeInstanceOf(services.InvalidSkuError);
       expect(e.message).toContain("Invalid sku NONEXISTENT-SKU");
     }
+  });
+
+  it("persists allocations", async () => {
+    const batch1 = new model.Batch("b1", "COFFEE-TABLE", 10, today());
+    const batch2 = new model.Batch("b2", "COFFEE-TABLE", 10, tomorrow());
+    const repo = new FakeRepository([batch2, batch1]);
+
+    const line1 = new model.OrderLine("order1", "COFFEE-TABLE", 10);
+    const line2 = new model.OrderLine("order2", "COFFEE-TABLE", 10);
+
+    // first order uses up all stock in batch1
+    const r1 = await services.allocate(line1, repo);
+    expect(r1).toBe("b1");
+
+    // second order should go to batch 2
+    const r2 = await services.allocate(line2, repo);
+    expect(r2).toBe("b2");
   });
 
   it("commits the session", async () => {

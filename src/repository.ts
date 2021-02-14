@@ -94,3 +94,7 @@ export class DynamoDbRepository extends AbstractRepository {
     );
   }
 }
+
+export abstract class AbstractSession {
+  public abstract commit(): void;
+}

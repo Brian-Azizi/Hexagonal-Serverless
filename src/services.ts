@@ -1,5 +1,5 @@
 import * as model from "./model";
-import { AbstractRepository } from "./repository";
+import { AbstractRepository, AbstractSession } from "./repository";
 
 export class InvalidSkuError extends Error {
   public readonly rootError?: Error;
@@ -16,7 +16,8 @@ const isValidSku = (sku: string, batches: model.Batch[]) =>
 
 export const allocate = async (
   line: model.OrderLine,
-  repo: AbstractRepository
+  repo: AbstractRepository,
+  session: AbstractSession
 ) => {
   const batches = await repo.list();
   if (!isValidSku(line.sku, batches)) {
@@ -24,6 +25,6 @@ export const allocate = async (
   }
 
   const batchref = model.allocate(line, batches);
-  // TODO: commit batches
+  session.commit();
   return batchref;
 };

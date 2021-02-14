@@ -1,7 +1,7 @@
-import * as model from "../src/model";
-import { AbstractRepository } from "../src/repository";
-import * as services from "../src/services";
-import { today, tomorrow } from "./utils";
+import * as model from "../../src/domain/model";
+import { AbstractRepository } from "../../src/adapters/repository";
+import * as services from "../../src/servicelayer/services";
+import { today, tomorrow } from "../utils";
 
 class FakeRepository implements AbstractRepository {
   private readonly batches: { [reference: string]: model.Batch } = {};

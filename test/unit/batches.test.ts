@@ -1,5 +1,5 @@
-import { Batch, OrderLine } from "../src/model";
-import { today } from "./utils";
+import { Batch, OrderLine } from "../../src/domain/model";
+import { today } from "../utils";
 
 const makeBatchAndLine = (
   sku: string,

@@ -1,5 +1,5 @@
-import * as model from "./model";
-import { AbstractRepository } from "./repository";
+import * as model from "../domain/model";
+import { AbstractRepository } from "../adapters/repository";
 
 export class InvalidSkuError extends Error {
   public readonly rootError?: Error;

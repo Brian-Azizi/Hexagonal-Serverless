@@ -1,8 +1,8 @@
 import { APIGatewayProxyEvent, Handler } from "aws-lambda";
-import { DynamoDbDocumentClient } from "./documentClient";
-import * as model from "./model";
-import { DynamoDbRepository } from "./repository";
-import * as services from "./services";
+import { DynamoDbDocumentClient } from "../adapters/documentClient";
+import * as model from "../domain/model";
+import { DynamoDbRepository } from "../adapters/repository";
+import * as services from "../servicelayer/services";
 
 export const allocate: Handler = async (event: APIGatewayProxyEvent) => {
   const documentClient = new DynamoDbDocumentClient();

@@ -1,7 +1,7 @@
-import { DynamoDbDocumentClient } from "../src/documentClient";
-import { Batch, OrderLine } from "../src/model";
-import { DynamoDbRepository } from "../src/repository";
-import { emptyTable } from "./utils";
+import { DynamoDbDocumentClient } from "../../src/adapters/documentClient";
+import { Batch, OrderLine } from "../../src/domain/model";
+import { DynamoDbRepository } from "../../src/adapters/repository";
+import { emptyTable } from "../utils";
 
 describe("DynamoDbRepository", () => {
   let docClient: DynamoDbDocumentClient;

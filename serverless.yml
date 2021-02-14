@@ -26,7 +26,7 @@ plugins:
 
 functions:
   allocate:
-    handler: src/api.allocate
+    handler: src/entrypoints/api.allocate
     timeout: 10
     events:
       - http:

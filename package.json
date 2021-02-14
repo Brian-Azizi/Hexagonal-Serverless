@@ -7,7 +7,7 @@
     "build": "tsc",
     "dev": "RUNTIME_ENV=local sls offline",
     "test": "jest --verbose --runInBand",
-    "test:watch": "jest --verbose --runInBand --watch --coverage false"
+    "test:watch": "jest --runInBand --watch --coverage false"
   },
   "keywords": [],
   "author": "",

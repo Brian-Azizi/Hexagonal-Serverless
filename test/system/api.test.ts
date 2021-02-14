@@ -1,8 +1,8 @@
 import axios from "axios";
 import * as uuid from "uuid";
-import * as config from "../config";
-import { DynamoDbDocumentClient } from "../src/documentClient";
-import { emptyTable } from "./utils";
+import * as config from "../../config";
+import { DynamoDbDocumentClient } from "../../src/adapters/documentClient";
+import { emptyTable } from "../utils";
 
 const addStock = (docClient: DynamoDbDocumentClient) => async (
   batches: [string, string, number, string][]

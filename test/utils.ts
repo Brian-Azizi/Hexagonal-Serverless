@@ -1,4 +1,4 @@
-import { DynamoDbDocumentClient } from "../src/documentClient";
+import { DynamoDbDocumentClient } from "../src/adapters/documentClient";
 
 export const today = () => {
   const result = new Date();

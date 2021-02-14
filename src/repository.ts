@@ -1,11 +1,13 @@
 import { DynamoDbDocumentClient } from "./documentClient";
 import { Batch, OrderLine } from "./model";
+
 export abstract class AbstractRepository {
   public abstract add(batch: Batch): void | Promise<void>;
   public abstract get(
     reference: string
   ): Batch | undefined | Promise<Batch | undefined>;
   public abstract list(): Batch[] | Promise<Batch[]>;
+  public abstract commit(): void;
 }
 
 interface DynamoOrderLine {
@@ -22,18 +24,11 @@ interface DynamoBatch {
   Eta: "NONE" | string;
   Allocations: DynamoOrderLine[];
 }
-export class DynamoDbRepository extends AbstractRepository {
+export class DynamoDbRepository implements AbstractRepository {
   private readonly TABLE_NAME = "Allocations";
+  private _batches: { [ref: string]: Batch } = {};
 
-  constructor(
-    private readonly documentClient: DynamoDbDocumentClient,
-    private readonly session: DynamoDbSession
-  ) {
-    super();
-    this.documentClient = documentClient;
-    this.session = session;
-    this.session.setCommitBatch(this.add);
-  }
+  constructor(private readonly documentClient: DynamoDbDocumentClient) {}
 
   private createBatchFromDynamoItem = (item: DynamoBatch): Batch => {
     return new Batch(
@@ -85,7 +80,7 @@ export class DynamoDbRepository extends AbstractRepository {
 
     if (!Items) return undefined;
     const batch = this.createBatchFromDynamoItem(Items[0] as DynamoBatch);
-    this.session.add(batch);
+    this._batches[batch.reference] = batch;
     return batch;
   };
 
@@ -100,35 +95,15 @@ export class DynamoDbRepository extends AbstractRepository {
     const batches = Items.map((item) =>
       this.createBatchFromDynamoItem(item as DynamoBatch)
     );
-    this.session.addMany(batches);
+    batches.forEach((batch) => {
+      this._batches[batch.reference] = batch;
+    });
     return batches;
   };
-}
-
-export abstract class AbstractSession {
-  public abstract commit(): void;
-}
-
-type CommitBatch = (batch: Batch) => void;
-export class DynamoDbSession extends AbstractSession {
-  private batches: { [ref: string]: Batch } = {};
-  private commitBatch: CommitBatch = (batch) => {};
-
-  public addMany(batches: Batch[]): void {
-    batches.forEach((batch) => this.add(batch));
-  }
-
-  public add(batch: Batch): void {
-    this.batches[batch.reference] = batch;
-  }
-
-  public setCommitBatch(commitBatch: CommitBatch) {
-    this.commitBatch = commitBatch;
-  }
 
   public async commit(): Promise<void> {
     await Promise.all(
-      Object.values(this.batches).map((batch) => this.commitBatch(batch))
+      Object.values(this._batches).map((batch) => this.add(batch))
     );
   }
 }

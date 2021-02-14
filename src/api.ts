@@ -1,13 +1,12 @@
 import { APIGatewayProxyEvent, Handler } from "aws-lambda";
 import { DynamoDbDocumentClient } from "./documentClient";
 import * as model from "./model";
-import { DynamoDbRepository, DynamoDbSession } from "./repository";
+import { DynamoDbRepository } from "./repository";
 import * as services from "./services";
 
 export const allocate: Handler = async (event: APIGatewayProxyEvent) => {
   const documentClient = new DynamoDbDocumentClient();
-  const session = new DynamoDbSession();
-  const repository = new DynamoDbRepository(documentClient, session);
+  const repository = new DynamoDbRepository(documentClient);
 
   const requestData = JSON.parse(event.body || "");
   const line = new model.OrderLine(
@@ -18,7 +17,7 @@ export const allocate: Handler = async (event: APIGatewayProxyEvent) => {
 
   let batchref: string;
   try {
-    batchref = await services.allocate(line, repository, session);
+    batchref = await services.allocate(line, repository);
   } catch (e) {
     if (
       e instanceof model.OutOfStockError ||

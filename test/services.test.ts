@@ -1,13 +1,17 @@
 import * as model from "../src/model";
-import { AbstractRepository, AbstractSession } from "../src/repository";
+import { AbstractRepository } from "../src/repository";
 import * as services from "../src/services";
 
-class FakeRepository extends AbstractRepository {
+class FakeRepository implements AbstractRepository {
   private readonly batches: Set<model.Batch>;
+  public committed: boolean = false;
 
   constructor(batches: model.Batch[] = []) {
-    super();
     this.batches = new Set(batches);
+  }
+
+  public commit(): void {
+    this.committed = true;
   }
 
   public add(batch: model.Batch): void {
@@ -25,21 +29,13 @@ class FakeRepository extends AbstractRepository {
   }
 }
 
-class FakeSession extends AbstractSession {
-  public committed: boolean = false;
-
-  public commit(): void {
-    this.committed = true;
-  }
-}
-
 describe("Allocate service", () => {
   it("returns an allocation", async () => {
     const line = new model.OrderLine("o1", "COMPLICATED-LAMP", 10);
     const batch = new model.Batch("b1", "COMPLICATED-LAMP", 100);
     const repo = new FakeRepository([batch]);
 
-    const result = await services.allocate(line, repo, new FakeSession());
+    const result = await services.allocate(line, repo);
     expect(result).toBe("b1");
   });
 
@@ -50,7 +46,7 @@ describe("Allocate service", () => {
 
     expect.assertions(2);
     try {
-      await services.allocate(line, repo, new FakeSession());
+      await services.allocate(line, repo);
     } catch (e) {
       expect(e).toBeInstanceOf(services.InvalidSkuError);
       expect(e.message).toContain("Invalid sku NONEXISTENT-SKU");
@@ -61,9 +57,8 @@ describe("Allocate service", () => {
     const line = new model.OrderLine("o1", "OMINOUS-MIRROR", 10);
     const batch = new model.Batch("b1", "OMINOUS-MIRROR", 100);
     const repo = new FakeRepository([batch]);
-    const session = new FakeSession();
 
-    await services.allocate(line, repo, session);
-    expect(session.committed).toBe(true);
+    await services.allocate(line, repo);
+    expect(repo.committed).toBe(true);
   });
 });

@@ -10,7 +10,7 @@ describe("allocate", () => {
       100,
       tomorrow()
     );
-    const line = new OrderLine("oref", "RETRO-CLOCK", 10);
+    const line = new OrderLine("o1", "RETRO-CLOCK", 10);
 
     allocate(line, [inStockBatch, shipmentBatch]);
 
@@ -49,7 +49,7 @@ describe("allocate", () => {
       100,
       tomorrow()
     );
-    const line = new OrderLine("oref", "HIGHBROW-POSTER", 10);
+    const line = new OrderLine("o1", "HIGHBROW-POSTER", 10);
 
     const allocation = allocate(line, [shipmentBatch, inStockBatch]);
     expect(allocation).toBe(inStockBatch.reference);

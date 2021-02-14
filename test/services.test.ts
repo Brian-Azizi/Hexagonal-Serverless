@@ -44,8 +44,8 @@ describe("Allocate service", () => {
   });
 
   it("throws an error for invalid SKUs", async () => {
-    const line = new model.OrderLine("o1", "NONEXISTENTSKU", 10);
-    const batch = new model.Batch("b1", "AREALSKU", 100);
+    const line = new model.OrderLine("o1", "NONEXISTENT-SKU", 10);
+    const batch = new model.Batch("b1", "AREAL-SKU", 100);
     const repo = new FakeRepository([batch]);
 
     expect.assertions(2);
@@ -53,7 +53,7 @@ describe("Allocate service", () => {
       await services.allocate(line, repo, new FakeSession());
     } catch (e) {
       expect(e).toBeInstanceOf(services.InvalidSkuError);
-      expect(e.message).toContain("Invalid sku NONEXISTENTSKU");
+      expect(e.message).toContain("Invalid sku NONEXISTENT-SKU");
     }
   });
 

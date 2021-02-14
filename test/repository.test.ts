@@ -1,6 +1,6 @@
 import { DynamoDbDocumentClient } from "../src/documentClient";
 import { Batch, OrderLine } from "../src/model";
-import { DynamoDbRepository } from "../src/repository";
+import { DynamoDbRepository, DynamoDbSession } from "../src/repository";
 import { emptyTable } from "./utils";
 
 describe("DynamoDbRepository", () => {
@@ -21,7 +21,7 @@ describe("DynamoDbRepository", () => {
       new Date(Date.UTC(2021, 3, 20)),
       new Set([new OrderLine("order999", "RUSTY-SOAPDISH", 15)])
     );
-    const repo = new DynamoDbRepository(docClient);
+    const repo = new DynamoDbRepository(docClient, new DynamoDbSession());
     await repo.add(batch);
 
     const { Items } = await docClient
@@ -66,7 +66,7 @@ describe("DynamoDbRepository", () => {
       })
       .promise();
 
-    const repo = new DynamoDbRepository(docClient);
+    const repo = new DynamoDbRepository(docClient, new DynamoDbSession());
     const retrieved = <Batch>await repo.get("batch02");
 
     expect(retrieved).toBeDefined();
@@ -111,7 +111,7 @@ describe("DynamoDbRepository", () => {
       })
       .promise();
 
-    const repo = new DynamoDbRepository(docClient);
+    const repo = new DynamoDbRepository(docClient, new DynamoDbSession());
     const retrieved = await repo.list();
 
     expect(retrieved.sort(Batch.sortByEta)).toStrictEqual(

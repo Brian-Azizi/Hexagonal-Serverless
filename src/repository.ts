@@ -25,11 +25,17 @@ interface DynamoBatch {
 export class DynamoDbRepository extends AbstractRepository {
   private readonly TABLE_NAME = "Allocations";
 
-  constructor(private readonly documentClient: DynamoDbDocumentClient) {
+  constructor(
+    private readonly documentClient: DynamoDbDocumentClient,
+    private readonly session: DynamoDbSession
+  ) {
     super();
+    this.documentClient = documentClient;
+    this.session = session;
+    this.session.setCommitBatch(this.add);
   }
 
-  private createBatchFromDynamoItem(item: DynamoBatch): Batch {
+  private createBatchFromDynamoItem = (item: DynamoBatch): Batch => {
     return new Batch(
       item?.Reference,
       item?.Sku,
@@ -41,9 +47,9 @@ export class DynamoDbRepository extends AbstractRepository {
         )
       )
     );
-  }
+  };
 
-  public async add(batch: Batch): Promise<void> {
+  public add = async (batch: Batch): Promise<void> => {
     const eta = batch.eta?.toISOString().split("T")[0] || "NONE";
     const params = {
       TableName: this.TABLE_NAME,
@@ -64,9 +70,9 @@ export class DynamoDbRepository extends AbstractRepository {
 
     await this.documentClient.put(params).promise();
     return;
-  }
+  };
 
-  public async get(reference: string): Promise<Batch | undefined> {
+  public get = async (reference: string): Promise<Batch | undefined> => {
     const { Items } = await this.documentClient
       .query({
         TableName: this.TABLE_NAME,
@@ -78,10 +84,12 @@ export class DynamoDbRepository extends AbstractRepository {
       .promise();
 
     if (!Items) return undefined;
-    return this.createBatchFromDynamoItem(Items[0] as DynamoBatch);
-  }
+    const batch = this.createBatchFromDynamoItem(Items[0] as DynamoBatch);
+    this.session.add(batch);
+    return batch;
+  };
 
-  public async list(): Promise<Batch[]> {
+  public list = async (): Promise<Batch[]> => {
     const { Items } = await this.documentClient
       .scan({
         TableName: this.TABLE_NAME,
@@ -89,12 +97,38 @@ export class DynamoDbRepository extends AbstractRepository {
       .promise();
 
     if (!Items) return [];
-    return Items.map((item) =>
+    const batches = Items.map((item) =>
       this.createBatchFromDynamoItem(item as DynamoBatch)
     );
-  }
+    this.session.addMany(batches);
+    return batches;
+  };
 }
 
 export abstract class AbstractSession {
   public abstract commit(): void;
+}
+
+type CommitBatch = (batch: Batch) => void;
+export class DynamoDbSession extends AbstractSession {
+  private batches: { [ref: string]: Batch } = {};
+  private commitBatch: CommitBatch = (batch) => {};
+
+  public addMany(batches: Batch[]): void {
+    batches.forEach((batch) => this.add(batch));
+  }
+
+  public add(batch: Batch): void {
+    this.batches[batch.reference] = batch;
+  }
+
+  public setCommitBatch(commitBatch: CommitBatch) {
+    this.commitBatch = commitBatch;
+  }
+
+  public async commit(): Promise<void> {
+    await Promise.all(
+      Object.values(this.batches).map((batch) => this.commitBatch(batch))
+    );
+  }
 }

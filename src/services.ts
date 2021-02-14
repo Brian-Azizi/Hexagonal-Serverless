@@ -25,6 +25,6 @@ export const allocate = async (
   }
 
   const batchref = model.allocate(line, batches);
-  session.commit();
+  await session.commit();
   return batchref;
 };

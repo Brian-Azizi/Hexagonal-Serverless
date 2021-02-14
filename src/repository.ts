@@ -1,10 +1,11 @@
 import { DynamoDbDocumentClient } from "./documentClient";
 import { Batch, OrderLine } from "./model";
-abstract class AbstractRepository {
+export abstract class AbstractRepository {
   public abstract add(batch: Batch): void | Promise<void>;
   public abstract get(
     reference: string
   ): Batch | undefined | Promise<Batch | undefined>;
+  public abstract list(): Batch[] | Promise<Batch[]>;
 }
 
 interface DynamoOrderLine {
@@ -91,28 +92,5 @@ export class DynamoDbRepository extends AbstractRepository {
     return Items.map((item) =>
       this.createBatchFromDynamoItem(item as DynamoBatch)
     );
-  }
-}
-
-export class FakeRepository extends AbstractRepository {
-  private readonly batches: Set<Batch>;
-
-  constructor(batches: Batch[] = []) {
-    super();
-    this.batches = new Set(batches);
-  }
-
-  public add(batch: Batch): void {
-    this.batches.add(batch);
-  }
-
-  public get(reference: string): Batch | undefined {
-    return Array.from(this.batches).find(
-      (batch) => batch.reference === reference
-    );
-  }
-
-  public list(): Batch[] {
-    return Array.from(this.batches);
   }
 }

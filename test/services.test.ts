@@ -56,4 +56,14 @@ describe("Allocate service", () => {
       expect(e.message).toContain("Invalid sku NONEXISTENTSKU");
     }
   });
+
+  it("commits the session", async () => {
+    const line = new model.OrderLine("o1", "OMINOUS-MIRROR", 10);
+    const batch = new model.Batch("b1", "OMINOUS-MIRROR", 100);
+    const repo = new FakeRepository([batch]);
+    const session = new FakeSession();
+
+    await services.allocate(line, repo, session);
+    expect(session.committed).toBe(true);
+  });
 });

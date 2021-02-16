@@ -32,6 +32,13 @@ functions:
       - http:
           path: /allocate
           method: post
+  addBatch:
+    handler: src/entrypoints/api.addBatch
+    timeout: 10
+    events:
+      - http:
+          path: /add-batch
+          method: post
 
 custom:
   region: eu-west-1

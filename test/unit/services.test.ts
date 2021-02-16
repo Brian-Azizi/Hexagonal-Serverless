@@ -77,4 +77,21 @@ describe("Allocate service", () => {
     await services.allocate(line, repo);
     expect(repo.committed).toBe(true);
   });
+
+  it("prefers warehouse batches to shipments", async () => {
+    const inStockBatch = new model.Batch("in-stock-batch", "RETRO-CLOCK", 100);
+    const shipmentBatch = new model.Batch(
+      "shipment-batch",
+      "RETRO-CLOCK",
+      100,
+      tomorrow()
+    );
+    const repo = new FakeRepository([inStockBatch, shipmentBatch]);
+
+    const line = new model.OrderLine("oref", "RETRO-CLOCK", 10);
+    await services.allocate(line, repo);
+
+    expect(inStockBatch.availableQuantity).toBe(90);
+    expect(shipmentBatch.availableQuantity).toBe(100);
+  });
 });

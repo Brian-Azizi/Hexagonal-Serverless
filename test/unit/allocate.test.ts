@@ -7,22 +7,6 @@ import {
 import { later, today, tomorrow } from "../utils";
 
 describe("allocate", () => {
-  it("prefers current stock batches to shipments", () => {
-    const inStockBatch = new Batch("in-stock-batch", "RETRO-CLOCK", 100);
-    const shipmentBatch = new Batch(
-      "shipment-batch",
-      "RETRO-CLOCK",
-      100,
-      tomorrow()
-    );
-    const line = new OrderLine("o1", "RETRO-CLOCK", 10);
-
-    allocate(line, [inStockBatch, shipmentBatch]);
-
-    expect(inStockBatch.availableQuantity).toBe(90);
-    expect(shipmentBatch.availableQuantity).toBe(100);
-  });
-
   it("prefers earlier batches", () => {
     const earliest = new Batch(
       "speedy-batch",

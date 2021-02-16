@@ -1,51 +1,21 @@
-import * as model from "../../src/domain/model";
-import { AbstractRepository } from "../../src/adapters/repository";
 import * as services from "../../src/servicelayer/services";
+import { FakeRepository } from "../fakeRepository";
 import { today, tomorrow } from "../utils";
-
-class FakeRepository implements AbstractRepository {
-  private readonly batches: { [reference: string]: model.Batch } = {};
-  public committed: boolean = false;
-
-  constructor(batches: model.Batch[] = []) {
-    batches.forEach((batch) => (this.batches[batch.reference] = batch));
-  }
-
-  public commit(): void {
-    this.committed = true;
-  }
-
-  public add(batch: model.Batch): void {
-    this.batches[batch.reference] = batch;
-  }
-
-  public get(reference: string): model.Batch | undefined {
-    return this.batches[reference];
-  }
-
-  public list(): model.Batch[] {
-    return Object.values(this.batches);
-  }
-}
 
 describe("Allocate service", () => {
   it("returns an allocation", async () => {
-    const line = new model.OrderLine("o1", "COMPLICATED-LAMP", 10);
-    const batch = new model.Batch("b1", "COMPLICATED-LAMP", 100);
-    const repo = new FakeRepository([batch]);
-
-    const result = await services.allocate(line, repo);
+    const repo = new FakeRepository();
+    await services.addBatch("b1", "COMPLICATED-LAMP", 100, undefined, repo);
+    const result = await services.allocate("o1", "COMPLICATED-LAMP", 10, repo);
     expect(result).toBe("b1");
   });
 
   it("throws an error for invalid SKUs", async () => {
-    const line = new model.OrderLine("o1", "NONEXISTENT-SKU", 10);
-    const batch = new model.Batch("b1", "AREAL-SKU", 100);
-    const repo = new FakeRepository([batch]);
-
+    const repo = new FakeRepository();
+    await services.addBatch("b1", "AREAL-SKU", 100, undefined, repo);
     expect.assertions(2);
     try {
-      await services.allocate(line, repo);
+      await services.allocate("o1", "NONEXISTENT-SKU", 10, repo);
     } catch (e) {
       expect(e).toBeInstanceOf(services.InvalidSkuError);
       expect(e.message).toContain("Invalid sku NONEXISTENT-SKU");
@@ -53,45 +23,56 @@ describe("Allocate service", () => {
   });
 
   it("persists allocations", async () => {
-    const batch1 = new model.Batch("b1", "COFFEE-TABLE", 10, today());
-    const batch2 = new model.Batch("b2", "COFFEE-TABLE", 10, tomorrow());
-    const repo = new FakeRepository([batch2, batch1]);
-
-    const line1 = new model.OrderLine("order1", "COFFEE-TABLE", 10);
-    const line2 = new model.OrderLine("order2", "COFFEE-TABLE", 10);
+    const repo = new FakeRepository();
+    await services.addBatch("b1", "COFFEE-TABLE", 10, today(), repo);
+    await services.addBatch("b2", "COFFEE-TABLE", 10, tomorrow(), repo);
 
     // first order uses up all stock in batch1
-    const r1 = await services.allocate(line1, repo);
+    const r1 = await services.allocate("order1", "COFFEE-TABLE", 10, repo);
     expect(r1).toBe("b1");
 
     // second order should go to batch 2
-    const r2 = await services.allocate(line2, repo);
+    const r2 = await services.allocate("order2", "COFFEE-TABLE", 10, repo);
     expect(r2).toBe("b2");
   });
 
   it("commits the session", async () => {
-    const line = new model.OrderLine("o1", "OMINOUS-MIRROR", 10);
-    const batch = new model.Batch("b1", "OMINOUS-MIRROR", 100);
-    const repo = new FakeRepository([batch]);
+    const repo = new FakeRepository();
+    await services.addBatch("b1", "OMINOUS-MIRROR", 100, undefined, repo);
 
-    await services.allocate(line, repo);
+    await services.allocate("o1", "OMINOUS-MIRROR", 10, repo);
     expect(repo.committed).toBe(true);
   });
 
   it("prefers warehouse batches to shipments", async () => {
-    const inStockBatch = new model.Batch("in-stock-batch", "RETRO-CLOCK", 100);
-    const shipmentBatch = new model.Batch(
+    const repo = new FakeRepository();
+    await services.addBatch(
+      "in-stock-batch",
+      "RETRO-CLOCK",
+      100,
+      undefined,
+      repo
+    );
+    await services.addBatch(
       "shipment-batch",
       "RETRO-CLOCK",
       100,
-      tomorrow()
+      tomorrow(),
+      repo
     );
-    const repo = new FakeRepository([inStockBatch, shipmentBatch]);
 
-    const line = new model.OrderLine("oref", "RETRO-CLOCK", 10);
-    await services.allocate(line, repo);
+    await services.allocate("oref", "RETRO-CLOCK", 10, repo);
 
-    expect(inStockBatch.availableQuantity).toBe(90);
-    expect(shipmentBatch.availableQuantity).toBe(100);
+    expect(await repo.get("in-stock-batch").availableQuantity).toBe(90);
+    expect(await repo.get("shipment-batch").availableQuantity).toBe(100);
+  });
+});
+
+describe("Add batch service", () => {
+  it("adds a batch", async () => {
+    const repo = new FakeRepository();
+    await services.addBatch("b1", "CRUNCHY-ARMCHAIR", 100, undefined, repo);
+    expect(await repo.get("b1")).toBeDefined();
+    expect(repo.committed).toBe(true);
   });
 });

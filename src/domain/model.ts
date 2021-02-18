@@ -35,7 +35,7 @@ export class Batch {
     this.allocations = allocations;
   }
 
-  public allocate(line: OrderLine) {
+  public allocate(line: OrderLine): void {
     if (this.canAllocate(line)) {
       this.allocations.add(line);
     }

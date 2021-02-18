@@ -14,11 +14,10 @@ export class InvalidSkuError extends Error {
 const isValidSku = (sku: string, batches: model.Batch[]) =>
   batches.map((b) => b.sku).includes(sku);
 
-export const allocate = async (
+export const allocate = (repo: AbstractRepository) => async (
   orderId: string,
   sku: string,
-  quantity: number,
-  repo: AbstractRepository
+  quantity: number
 ): Promise<string> => {
   const batches = await repo.list();
   if (!isValidSku(sku, batches)) {
@@ -31,12 +30,11 @@ export const allocate = async (
   return batchref;
 };
 
-export const addBatch = async (
+export const addBatch = (repository: AbstractRepository) => async (
   reference: string,
   sku: string,
   quantity: number,
-  eta: Date | undefined,
-  repository: AbstractRepository
+  eta: Date | undefined
 ): Promise<void> => {
   await repository.add(new model.Batch(reference, sku, quantity, eta));
   await repository.commit();

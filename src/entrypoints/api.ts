@@ -12,11 +12,10 @@ export const allocate: Handler = async (event: APIGatewayProxyEvent) => {
 
   let batchref: string;
   try {
-    batchref = await services.allocate(
+    batchref = await services.allocate(repository)(
       requestData["orderId"],
       requestData["sku"],
-      requestData["quantity"],
-      repository
+      requestData["quantity"]
     );
   } catch (e) {
     if (e instanceof OutOfStockError || e instanceof services.InvalidSkuError) {
@@ -29,14 +28,12 @@ export const allocate: Handler = async (event: APIGatewayProxyEvent) => {
     } else throw e;
   }
 
-  const response = {
+  return {
     statusCode: 201,
     body: JSON.stringify({
       batchref,
     }),
   };
-
-  return response;
 };
 
 export const addBatch: Handler = async (event: APIGatewayProxyEvent) => {
@@ -45,17 +42,15 @@ export const addBatch: Handler = async (event: APIGatewayProxyEvent) => {
 
   const { reference, sku, quantity, eta } = JSON.parse(event.body || "");
 
-  await services.addBatch(
+  await services.addBatch(repository)(
     reference,
     sku,
     quantity,
-    eta && new Date(eta),
-    repository
+    eta && new Date(eta)
   );
-  const response = {
+
+  return {
     statusCode: 201,
     body: "OK",
   };
-
-  return response;
 };

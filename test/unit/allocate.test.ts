@@ -41,7 +41,7 @@ describe("allocate", () => {
     const line = new OrderLine("o1", "HIGHBROW-POSTER", 10);
 
     const allocation = allocate(line, [shipmentBatch, inStockBatch]);
-    expect(allocation).toBe(inStockBatch.reference);
+    expect(allocation).toBe(inStockBatch);
   });
 
   it("throws an OutOfStockError if it cannot allocate", () => {

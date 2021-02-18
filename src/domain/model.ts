@@ -62,7 +62,7 @@ export class Batch {
   }
 }
 
-export function allocate(line: OrderLine, batches: Batch[]): string {
+export function allocate(line: OrderLine, batches: Batch[]): Batch {
   const batch = batches
     .filter((b) => b.canAllocate(line))
     .sort(Batch.sortByEta)[0];
@@ -72,7 +72,7 @@ export function allocate(line: OrderLine, batches: Batch[]): string {
   }
 
   batch.allocate(line);
-  return batch.reference;
+  return batch;
 }
 
 export class OutOfStockError extends Error {

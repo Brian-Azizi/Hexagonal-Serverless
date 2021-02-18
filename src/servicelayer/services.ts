@@ -25,12 +25,10 @@ export const allocate = (repo: AbstractRepository) => async (
   }
 
   const line = new model.OrderLine(orderId, sku, quantity);
-  const batchref = model.allocate(line, batches);
-
-  const batch = batches.find((b) => b.reference === batchref) as model.Batch;
+  const batch = model.allocate(line, batches);
   await repo.add(batch);
 
-  return batchref;
+  return batch.reference;
 };
 
 export const addBatch = (repository: AbstractRepository) => async (

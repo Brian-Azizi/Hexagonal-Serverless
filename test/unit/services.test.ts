@@ -36,14 +36,6 @@ describe("Allocate service", () => {
     expect(r2).toBe("b2");
   });
 
-  it("commits the session", async () => {
-    const repo = new FakeRepository();
-    await services.addBatch(repo)("b1", "OMINOUS-MIRROR", 100, undefined);
-
-    await services.allocate(repo)("o1", "OMINOUS-MIRROR", 10);
-    expect(repo.committed).toBe(true);
-  });
-
   it("prefers warehouse batches to shipments", async () => {
     const repo = new FakeRepository();
     await services.addBatch(repo)(
@@ -71,6 +63,5 @@ describe("Add batch service", () => {
     const repo = new FakeRepository();
     await services.addBatch(repo)("b1", "CRUNCHY-ARMCHAIR", 100, undefined);
     expect(await repo.get("b1")).toBeDefined();
-    expect(repo.committed).toBe(true);
   });
 });

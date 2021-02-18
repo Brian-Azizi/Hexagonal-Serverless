@@ -26,7 +26,10 @@ export const allocate = (repo: AbstractRepository) => async (
 
   const line = new model.OrderLine(orderId, sku, quantity);
   const batchref = model.allocate(line, batches);
-  await repo.commit();
+
+  const batch = batches.find((b) => b.reference === batchref) as model.Batch;
+  await repo.add(batch);
+
   return batchref;
 };
 
@@ -37,5 +40,4 @@ export const addBatch = (repository: AbstractRepository) => async (
   eta: Date | undefined
 ): Promise<void> => {
   await repository.add(new model.Batch(reference, sku, quantity, eta));
-  await repository.commit();
 };

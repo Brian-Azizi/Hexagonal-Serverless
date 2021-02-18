@@ -7,7 +7,6 @@ export abstract class AbstractRepository {
     reference: string
   ): Batch | undefined | Promise<Batch | undefined>;
   public abstract list(): Batch[] | Promise<Batch[]>;
-  public abstract commit(): void;
 }
 
 interface DynamoOrderLine {
@@ -26,7 +25,6 @@ interface DynamoBatch {
 }
 export class DynamoDbRepository implements AbstractRepository {
   private readonly TABLE_NAME = "Allocations";
-  private _batches: { [ref: string]: Batch } = {};
 
   constructor(private readonly documentClient: DynamoDbDocumentClient) {}
 
@@ -79,9 +77,7 @@ export class DynamoDbRepository implements AbstractRepository {
       .promise();
 
     if (!Items) return undefined;
-    const batch = this.createBatchFromDynamoItem(Items[0] as DynamoBatch);
-    this._batches[batch.reference] = batch;
-    return batch;
+    return this.createBatchFromDynamoItem(Items[0] as DynamoBatch);
   };
 
   public list = async (): Promise<Batch[]> => {
@@ -92,18 +88,8 @@ export class DynamoDbRepository implements AbstractRepository {
       .promise();
 
     if (!Items) return [];
-    const batches = Items.map((item) =>
+    return Items.map((item) =>
       this.createBatchFromDynamoItem(item as DynamoBatch)
     );
-    batches.forEach((batch) => {
-      this._batches[batch.reference] = batch;
-    });
-    return batches;
   };
-
-  public async commit(): Promise<void> {
-    await Promise.all(
-      Object.values(this._batches).map((batch) => this.add(batch))
-    );
-  }
 }

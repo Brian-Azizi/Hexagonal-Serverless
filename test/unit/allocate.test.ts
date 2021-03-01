@@ -1,5 +1,5 @@
 import {
-  allocate,
+  Product,
   Batch,
   OrderLine,
   OutOfStockError,
@@ -21,9 +21,10 @@ describe("allocate", () => {
       tomorrow()
     );
     const latest = new Batch("slow-batch", "MINIMALIST-SPOON", 100, later());
-    const line = new OrderLine("order1", "MINIMALIST-SPOON", 10);
+    const product = new Product("MINIMALIST-SPOON", [medium, earliest, latest]);
 
-    allocate(line, [medium, earliest, latest]);
+    const line = new OrderLine("order1", "MINIMALIST-SPOON", 10);
+    product.allocate(line);
 
     expect(earliest.availableQuantity).toBe(90);
     expect(medium.availableQuantity).toBe(100);
@@ -38,19 +39,24 @@ describe("allocate", () => {
       100,
       tomorrow()
     );
-    const line = new OrderLine("o1", "HIGHBROW-POSTER", 10);
+    const product = new Product("HIGHBROW-POSTER", [
+      shipmentBatch,
+      inStockBatch,
+    ]);
 
-    const allocation = allocate(line, [shipmentBatch, inStockBatch]);
+    const line = new OrderLine("o1", "HIGHBROW-POSTER", 10);
+    const allocation = product.allocate(line);
     expect(allocation).toBe(inStockBatch);
   });
 
   it("throws an OutOfStockError if it cannot allocate", () => {
     const batch = new Batch("batch1", "SMALL-FORK", 10, today());
-    allocate(new OrderLine("order1", "SMALL-FORK", 10), [batch]);
+    const product = new Product("SMALL-FORK", [batch]);
+    product.allocate(new OrderLine("order1", "SMALL-FORK", 10));
 
     expect.assertions(2);
     try {
-      allocate(new OrderLine("order1", "SMALL-FORK", 10), [batch]);
+      product.allocate(new OrderLine("order1", "SMALL-FORK", 10));
     } catch (e) {
       expect(e).toBeInstanceOf(OutOfStockError);
       expect(e.message).toContain("SMALL-FORK");

@@ -6,6 +6,29 @@ export class OrderLine {
   ) {}
 }
 
+export class Product {
+  public readonly sku: string;
+  public batches: Batch[];
+
+  constructor(sku: string, batches: Batch[]) {
+    this.sku = sku;
+    this.batches = batches;
+  }
+
+  allocate = (line: OrderLine): Batch => {
+    const batch = this.batches
+      .filter((b) => b.canAllocate(line))
+      .sort(Batch.sortByEta)[0];
+
+    if (batch === undefined) {
+      throw new OutOfStockError(`Out of stock for sku ${line.sku}`);
+    }
+
+    batch.allocate(line);
+    return batch;
+  };
+}
+
 export class Batch {
   public readonly reference: string;
   public readonly sku: string;
@@ -60,19 +83,6 @@ export class Batch {
       this.allocations.delete(line);
     }
   }
-}
-
-export function allocate(line: OrderLine, batches: Batch[]): Batch {
-  const batch = batches
-    .filter((b) => b.canAllocate(line))
-    .sort(Batch.sortByEta)[0];
-
-  if (batch === undefined) {
-    throw new OutOfStockError(`Out of stock for sku ${line.sku}`);
-  }
-
-  batch.allocate(line);
-  return batch;
 }
 
 export class OutOfStockError extends Error {

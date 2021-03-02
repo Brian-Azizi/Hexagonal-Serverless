@@ -1,12 +1,12 @@
 import { APIGatewayProxyEvent, Handler } from "aws-lambda";
 import { DynamoDbDocumentClient } from "../adapters/documentClient";
 import { OutOfStockError } from "../domain/model";
-import { DynamoDbRepository } from "../adapters/repository";
+import { DynamoProductRepository } from "../adapters/repository";
 import * as services from "../servicelayer/services";
 
 export const allocate: Handler = async (event: APIGatewayProxyEvent) => {
   const documentClient = new DynamoDbDocumentClient();
-  const repository = new DynamoDbRepository(documentClient);
+  const repository = new DynamoProductRepository(documentClient);
 
   const requestData = JSON.parse(event.body || "");
 
@@ -38,7 +38,7 @@ export const allocate: Handler = async (event: APIGatewayProxyEvent) => {
 
 export const addBatch: Handler = async (event: APIGatewayProxyEvent) => {
   const documentClient = new DynamoDbDocumentClient();
-  const repository = new DynamoDbRepository(documentClient);
+  const repository = new DynamoProductRepository(documentClient);
 
   const { reference, sku, quantity, eta } = JSON.parse(event.body || "");
 

@@ -102,6 +102,8 @@ export class DynamoDbRepository implements AbstractRepository {
 }
 
 export class DynamoProductRepository implements AbstractProductRepository {
+  constructor(private readonly documentClient: DynamoDbDocumentClient) {}
+
   public add(product: Product): void | Promise<void> {
     throw new Error("Method not implemented.");
   }

@@ -1,5 +1,5 @@
 import { DynamoDbDocumentClient } from "./documentClient";
-import { Batch, OrderLine } from "../domain/model";
+import { Batch, OrderLine, Product } from "../domain/model";
 
 export abstract class AbstractRepository {
   public abstract add(batch: Batch): void | Promise<void>;
@@ -7,6 +7,13 @@ export abstract class AbstractRepository {
     reference: string
   ): Batch | undefined | Promise<Batch | undefined>;
   public abstract list(): Batch[] | Promise<Batch[]>;
+}
+
+export abstract class AbstractProductRepository {
+  public abstract add(product: Product): void | Promise<void>;
+  public abstract get(
+    sku: string
+  ): Product | undefined | Promise<Product | undefined>;
 }
 
 interface DynamoOrderLine {
@@ -92,4 +99,13 @@ export class DynamoDbRepository implements AbstractRepository {
       this.createBatchFromDynamoItem(item as DynamoBatch)
     );
   };
+}
+
+export class DynamoProductRepository implements AbstractProductRepository {
+  public add(product: Product): void | Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  public get(sku: string): Product | Promise<Product | undefined> | undefined {
+    throw new Error("Method not implemented.");
+  }
 }

@@ -1,4 +1,4 @@
-import { AbstractRepository } from "../adapters/repository";
+import { AbstractProductRepository } from "../adapters/repository";
 import * as model from "../domain/model";
 
 export class InvalidSkuError extends Error {
@@ -11,31 +11,33 @@ export class InvalidSkuError extends Error {
   }
 }
 
-const isValidSku = (sku: string, batches: model.Batch[]) =>
-  batches.map((b) => b.sku).includes(sku);
-
-export const allocate = (repo: AbstractRepository) => async (
+export const allocate = (repo: AbstractProductRepository) => async (
   orderId: string,
   sku: string,
   quantity: number
 ): Promise<string> => {
-  const batches = await repo.list();
-  if (!isValidSku(sku, batches)) {
+  const product = await repo.get(sku);
+  if (!product) {
     throw new InvalidSkuError(`Invalid sku ${sku}`);
   }
 
   const line = new model.OrderLine(orderId, sku, quantity);
-  const batch = model.allocate(line, batches);
-  await repo.add(batch);
+  const batch = product.allocate(line);
+  await repo.add(product);
 
   return batch.reference;
 };
 
-export const addBatch = (repository: AbstractRepository) => async (
+export const addBatch = (repository: AbstractProductRepository) => async (
   reference: string,
   sku: string,
   quantity: number,
   eta: Date | undefined
 ): Promise<void> => {
-  await repository.add(new model.Batch(reference, sku, quantity, eta));
+  let product = await repository.get(sku);
+  if (!product) {
+    product = new model.Product(sku, []);
+  }
+  product.batches.push(new model.Batch(reference, sku, quantity, eta));
+  await repository.add(product);
 };

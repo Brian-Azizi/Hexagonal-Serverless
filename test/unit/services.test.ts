@@ -1,17 +1,17 @@
 import * as services from "../../src/servicelayer/services";
-import { FakeRepository } from "../fakeRepository";
+import { FakeProductRepository } from "../FakeProductRepository";
 import { today, tomorrow } from "../utils";
 
 describe("Allocate service", () => {
   it("returns an allocation", async () => {
-    const repo = new FakeRepository();
+    const repo = new FakeProductRepository();
     await services.addBatch(repo)("b1", "COMPLICATED-LAMP", 100, undefined);
     const result = await services.allocate(repo)("o1", "COMPLICATED-LAMP", 10);
     expect(result).toBe("b1");
   });
 
   it("throws an error for invalid SKUs", async () => {
-    const repo = new FakeRepository();
+    const repo = new FakeProductRepository();
     await services.addBatch(repo)("b1", "AREAL-SKU", 100, undefined);
     expect.assertions(2);
     try {
@@ -23,7 +23,7 @@ describe("Allocate service", () => {
   });
 
   it("persists allocations", async () => {
-    const repo = new FakeRepository();
+    const repo = new FakeProductRepository();
     await services.addBatch(repo)("b1", "COFFEE-TABLE", 10, today());
     await services.addBatch(repo)("b2", "COFFEE-TABLE", 10, tomorrow());
 
@@ -37,7 +37,7 @@ describe("Allocate service", () => {
   });
 
   it("prefers warehouse batches to shipments", async () => {
-    const repo = new FakeRepository();
+    const repo = new FakeProductRepository();
     await services.addBatch(repo)(
       "in-stock-batch",
       "RETRO-CLOCK",
@@ -53,15 +53,22 @@ describe("Allocate service", () => {
 
     await services.allocate(repo)("oref", "RETRO-CLOCK", 10);
 
-    expect(await repo.get("in-stock-batch").availableQuantity).toBe(90);
-    expect(await repo.get("shipment-batch").availableQuantity).toBe(100);
+    const product = await repo.get("RETRO-CLOCK");
+    expect(
+      product.batches.find((batch) => batch.reference === "in-stock-batch")
+        .availableQuantity
+    ).toBe(90);
+    expect(
+      product.batches.find((batch) => batch.reference === "shipment-batch")
+        .availableQuantity
+    ).toBe(100);
   });
 });
 
 describe("Add batch service", () => {
   it("adds a batch", async () => {
-    const repo = new FakeRepository();
+    const repo = new FakeProductRepository();
     await services.addBatch(repo)("b1", "CRUNCHY-ARMCHAIR", 100, undefined);
-    expect(await repo.get("b1")).toBeDefined();
+    expect((await repo.get("CRUNCHY-ARMCHAIR")).batches).toBeDefined();
   });
 });

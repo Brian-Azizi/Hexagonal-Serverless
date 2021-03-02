@@ -130,3 +130,8 @@ describe("DynamoDbRepository", () => {
     );
   });
 });
+
+describe("DynamoDbProductRepository", () => {
+  it("can save a product", async () => {});
+  it("can retrieve a product", async () => {});
+});

@@ -102,12 +102,88 @@ export class DynamoDbRepository implements AbstractRepository {
 }
 
 export class DynamoProductRepository implements AbstractProductRepository {
+  private readonly TABLE_NAME = "AllocationProducts";
+
   constructor(private readonly documentClient: DynamoDbDocumentClient) {}
 
-  public add(product: Product): void | Promise<void> {
-    throw new Error("Method not implemented.");
+  public async add(product: Product): Promise<void> {
+    await this.documentClient
+      .batchWrite({
+        RequestItems: {
+          [this.TABLE_NAME]: [
+            {
+              PutRequest: {
+                Item: {
+                  PK: product.sku,
+                  SK: `PRODUCT`,
+                  Sku: product.sku,
+                },
+              },
+            },
+            ...product.batches.map((batch) => ({
+              PutRequest: {
+                Item: {
+                  PK: batch.sku,
+                  SK: `BATCH#${batch.reference}`,
+                  Reference: batch.reference,
+                  Sku: batch.sku,
+                  PurchasedQuantity: batch.purchasedQuantity,
+                  Eta: batch.eta?.toISOString().split("T")[0] || "NONE",
+                  Allocations: Array.from(batch.allocations).map((line) => ({
+                    OrderId: line.orderId,
+                    Sku: line.sku,
+                    Quantity: line.quantity,
+                  })),
+                },
+              },
+            })),
+          ],
+        },
+      })
+      .promise();
   }
-  public get(sku: string): Product | Promise<Product | undefined> | undefined {
-    throw new Error("Method not implemented.");
+
+  public async get(sku: string): Promise<Product | undefined> {
+    const { Items } = await this.documentClient
+      .query({
+        TableName: "AllocationProducts",
+        KeyConditionExpression: "PK = :pk",
+        ExpressionAttributeValues: {
+          ":pk": sku,
+        },
+      })
+      .promise();
+
+    if (!Items) {
+      return;
+    }
+
+    const productRow = Items.find((Item) => Item.SK === "PRODUCT");
+    const batchRows = Items.filter((Item) =>
+      Item.SK.startsWith("BATCH")
+    ) as DynamoBatch[];
+
+    if (!productRow) {
+      return;
+    }
+
+    const batches = batchRows.map(this.createBatchFromDynamoItem);
+    const product = new Product(productRow.Sku, batches);
+
+    return product;
   }
+
+  private createBatchFromDynamoItem = (item: DynamoBatch): Batch => {
+    return new Batch(
+      item?.Reference,
+      item?.Sku,
+      item?.PurchasedQuantity,
+      item?.Eta === "NONE" ? undefined : new Date(item?.Eta),
+      new Set(
+        item?.Allocations.map(
+          (line) => new OrderLine(line.OrderId, line.Sku, line.Quantity)
+        )
+      )
+    );
+  };
 }

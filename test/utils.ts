@@ -19,20 +19,20 @@ export const later = () => {
   return result;
 };
 
-export async function emptyTable(
-  documentClient: DynamoDbDocumentClient
-): Promise<void> {
+export const emptyTable = (documentClient: DynamoDbDocumentClient) => async (
+  tableName: string
+): Promise<void> => {
   const { Items } = await documentClient
-    .scan({ TableName: "Allocations" })
+    .scan({ TableName: tableName })
     .promise();
 
   const deleteRequests = Items?.map((Item) =>
     documentClient
       .delete({
-        TableName: "Allocations",
+        TableName: tableName,
         Key: { PK: Item.PK, SK: Item.SK },
       })
       .promise()
   );
   if (deleteRequests) await Promise.all(deleteRequests);
-}
+};

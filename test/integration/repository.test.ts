@@ -83,7 +83,7 @@ describe("DynamoDbRepository", () => {
   });
 
   it("can list batches", async () => {
-    await emptyTable(docClient);
+    await emptyTable(docClient)("Allocations");
 
     await docClient
       .put({
@@ -161,31 +161,35 @@ describe("DynamoProductRepository", () => {
         },
       })
       .promise();
-    expect(Items).toStrictEqual([
-      {
-        PK: sku,
-        SK: "PRODUCT",
-        Sku: sku,
-      },
-      {
-        PK: sku,
-        SK: `BATCH#${ref}`,
-        Eta: "2021-04-20",
-        PurchasedQuantity: 100,
-        Reference: ref,
-        Sku: "RUSTY-SOAPDISH",
-        Allocations: [
-          {
-            Sku: "RUSTY-SOAPDISH",
-            OrderId: "order999",
-            Quantity: 15,
-          },
-        ],
-      },
-    ]);
+    expect(Items).toStrictEqual(
+      expect.arrayContaining([
+        {
+          PK: sku,
+          SK: "PRODUCT",
+          Sku: sku,
+        },
+        {
+          PK: sku,
+          SK: `BATCH#${ref}`,
+          Eta: "2021-04-20",
+          PurchasedQuantity: 100,
+          Reference: ref,
+          Sku: "RUSTY-SOAPDISH",
+          Allocations: [
+            {
+              Sku: "RUSTY-SOAPDISH",
+              OrderId: "order999",
+              Quantity: 15,
+            },
+          ],
+        },
+      ])
+    );
   });
 
   it("can retrieve a product", async () => {
+    await emptyTable(docClient)("AllocationProducts");
+
     const sku = "VELVET-SOFA";
     const ref1 = uuid.v4();
     const ref2 = uuid.v4();
@@ -243,16 +247,20 @@ describe("DynamoProductRepository", () => {
     expect(product).toBeDefined();
     expect(product.sku).toBe("VELVET-SOFA");
     expect(product.batches.length).toBe(2);
-    expect(product.batches[0].reference).toBe(ref1);
-    expect(product.batches[0].purchasedQuantity).toBe(20);
-    expect(product.batches[0].eta).toBeUndefined();
-    expect(product.batches[0].allocations).toEqual(
+
+    const batch1 = product.batches.find((batch) => batch.reference === ref1);
+    expect(batch1.reference).toBe(ref1);
+    expect(batch1.purchasedQuantity).toBe(20);
+    expect(batch1.eta).toBeUndefined();
+    expect(batch1.allocations).toEqual(
       new Set([new OrderLine("order123", "VELVET-SOFA", 12)])
     );
-    expect(product.batches[1].reference).toBe(ref1);
-    expect(product.batches[1].purchasedQuantity).toBe(26);
-    expect(product.batches[1].eta).toEqual(new Date("2021-12-02"));
-    expect(product.batches[1].allocations).toEqual(
+
+    const batch2 = product.batches.find((batch) => batch.reference === ref2);
+    expect(batch2.reference).toBe(ref2);
+    expect(batch2.purchasedQuantity).toBe(26);
+    expect(batch2.eta).toEqual(new Date("2021-12-02"));
+    expect(batch2.allocations).toEqual(
       new Set([new OrderLine("order999", "VELVET-SOFA", 10)])
     );
   });

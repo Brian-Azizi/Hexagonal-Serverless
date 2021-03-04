@@ -2,6 +2,10 @@ import axios from "axios";
 import * as uuid from "uuid";
 import * as config from "../../config";
 
+const generateSku = () => {
+  return `TEST#${uuid.v4()}`;
+};
+
 const postToAddBatch = async (
   reference: string,
   sku: string,
@@ -17,7 +21,7 @@ const postToAddBatch = async (
 
 describe("Allocations API", () => {
   test("happy path returns a 201 and the allocated batch reference", async () => {
-    const [sku, otherSku] = [uuid.v4(), uuid.v4()];
+    const [sku, otherSku] = [generateSku(), generateSku()];
     const [earlyBatch, laterBatch, otherBatch] = [
       uuid.v4(),
       uuid.v4(),
@@ -39,7 +43,11 @@ describe("Allocations API", () => {
   });
 
   test("unhappy path returns a 400 and the error message", async () => {
-    const [sku, smallBatch, largeOrder] = [uuid.v4(), uuid.v4(), uuid.v4()];
+    const [sku, smallBatch, largeOrder] = [
+      generateSku(),
+      generateSku(),
+      generateSku(),
+    ];
     await postToAddBatch(smallBatch, sku, 10, "2011-01-01");
 
     const data = { orderId: largeOrder, sku, quantity: 20 };

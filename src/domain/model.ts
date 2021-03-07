@@ -9,10 +9,12 @@ export class OrderLine {
 export class Product {
   public readonly sku: string;
   public batches: Batch[];
+  public version: number;
 
-  constructor(sku: string, batches: Batch[]) {
+  constructor(sku: string, batches: Batch[], version: number = 1) {
     this.sku = sku;
     this.batches = batches;
+    this.version = version;
   }
 
   allocate = (line: OrderLine): Batch => {
@@ -25,6 +27,7 @@ export class Product {
     }
 
     batch.allocate(line);
+    this.version += 1;
     return batch;
   };
 }

@@ -36,6 +36,7 @@ describe("DynamoProductRepository", () => {
           PK: sku,
           SK: "PRODUCT",
           Sku: sku,
+          Version: 1,
         },
         {
           PK: sku,
@@ -132,4 +133,49 @@ describe("DynamoProductRepository", () => {
       new Set([new OrderLine("order999", "VELVET-SOFA", 10)])
     );
   });
+
+  describe("concurrent updates", () => {
+    let sku: string;
+    beforeEach(async (done) => {
+      const ref = uuid.v4();
+      sku = uuid.v4();
+      const batch = new Batch(ref, sku, 100);
+      const product = new Product(sku, [batch]);
+      const repo = new DynamoProductRepository(docClient);
+      await repo.add(product);
+      done();
+    });
+
+    it("fails when allocating two lines at the same time", async () => {
+      const [order1, order2] = ["order1", "order2"];
+      const exceptions = [];
+      await Promise.all([
+        tryToAllocate(order1, sku, exceptions),
+        tryToAllocate(order2, sku, exceptions),
+      ]);
+
+      const repo = new DynamoProductRepository(docClient);
+      const product = await repo.get(sku);
+      expect(product.version).toBe(2);
+      expect(exceptions.length).toBe(1);
+      expect(exceptions[0]).toContain("ABCE");
+    });
+  });
 });
+
+async function tryToAllocate(
+  orderId: string,
+  sku: string,
+  exceptions: Error[]
+) {
+  const line = new OrderLine(orderId, sku, 10);
+  try {
+    const repo = new DynamoProductRepository(new DynamoDbDocumentClient());
+    const product = await repo.get(sku);
+    product.allocate(line);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await repo.add(product);
+  } catch (e) {
+    exceptions.push(e);
+  }
+}

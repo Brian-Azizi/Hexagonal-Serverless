@@ -38,6 +38,7 @@ export class DynamoProductRepository implements AbstractProductRepository {
                   PK: product.sku,
                   SK: `PRODUCT`,
                   Sku: product.sku,
+                  Version: product.version,
                 },
               },
             },
@@ -89,7 +90,7 @@ export class DynamoProductRepository implements AbstractProductRepository {
     }
 
     const batches = batchRows.map(this.createBatchFromDynamoItem);
-    const product = new Product(productRow.Sku, batches);
+    const product = new Product(productRow.Sku, batches, productRow.Version);
 
     return product;
   }

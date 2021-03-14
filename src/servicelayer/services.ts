@@ -38,6 +38,6 @@ export const addBatch = (repository: AbstractProductRepository) => async (
   if (!product) {
     product = new model.Product(sku, []);
   }
-  product.batches.push(new model.Batch(reference, sku, quantity, eta));
+  product.addBatch(new model.Batch(reference, sku, quantity, eta));
   await repository.add(product);
 };

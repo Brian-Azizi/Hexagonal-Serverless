@@ -8,7 +8,7 @@ describe("DynamoProductRepository", () => {
 
   it("can save a product", async () => {
     const ref = uuid.v4();
-    const sku = "RUSTY-SOAPDISH";
+    const sku = uuid.v4();
     const batch = new Batch(
       ref,
       sku,
@@ -44,10 +44,10 @@ describe("DynamoProductRepository", () => {
           Eta: "2021-04-20",
           PurchasedQuantity: 100,
           Reference: ref,
-          Sku: "RUSTY-SOAPDISH",
+          Sku: sku,
           Allocations: [
             {
-              Sku: "RUSTY-SOAPDISH",
+              Sku: sku,
               OrderId: "order999",
               Quantity: 15,
             },
@@ -179,7 +179,7 @@ async function tryToAllocate(
   exceptions: Error[],
   withDelay: boolean = false
 ) {
-  if (withDelay) await new Promise((resolve) => setTimeout(resolve, 1000));
+  if (withDelay) await new Promise((resolve) => setTimeout(resolve, 200));
 
   const line = new OrderLine(orderId, sku, 10);
   try {
@@ -187,7 +187,7 @@ async function tryToAllocate(
     const product = await repo.get(sku);
     if (!product) fail();
     product.allocate(line);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     await repo.add(product);
   } catch (e) {
     exceptions.push(e.code);

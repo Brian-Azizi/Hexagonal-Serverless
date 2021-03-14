@@ -27,11 +27,9 @@ describe("Allocations API", () => {
       uuid.v4(),
       uuid.v4(),
     ];
-    await Promise.all([
-      postToAddBatch(laterBatch, sku, 100, "2011-01-02"),
-      postToAddBatch(earlyBatch, sku, 100, "2011-01-01"),
-      postToAddBatch(otherBatch, otherSku, 100),
-    ]);
+    await postToAddBatch(earlyBatch, sku, 100, "2011-01-01");
+    await postToAddBatch(laterBatch, sku, 100, "2011-01-02");
+    await postToAddBatch(otherBatch, otherSku, 100);
 
     const requestData = { orderId: uuid.v4(), sku, quantity: 3 };
     const response = await axios.post(

@@ -27,8 +27,13 @@ export class Product {
     }
 
     batch.allocate(line);
-    this.version += 1;
+    this.version++;
     return batch;
+  };
+
+  addBatch = (batch: Batch): void => {
+    this.batches.push(batch);
+    this.version++;
   };
 }
 

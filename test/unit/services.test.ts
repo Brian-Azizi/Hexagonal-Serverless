@@ -54,15 +54,15 @@ describe("Allocate service", () => {
     await services.allocate(repo)("oref", "RETRO-CLOCK", 10);
 
     const product = await repo.get("RETRO-CLOCK");
-    if (!product) fail();
-    expect(
-      product.batches.find((batch) => batch.reference === "in-stock-batch")
-        .availableQuantity
-    ).toBe(90);
-    expect(
-      product.batches.find((batch) => batch.reference === "shipment-batch")
-        .availableQuantity
-    ).toBe(100);
+    const inStockBatch = product.batches.find(
+      (batch) => batch.reference === "in-stock-batch"
+    );
+    const shipmentBatch = product.batches.find(
+      (batch) => batch.reference === "shipment-batch"
+    );
+    if (!inStockBatch || !shipmentBatch) fail();
+    expect(inStockBatch.availableQuantity).toBe(90);
+    expect(shipmentBatch.availableQuantity).toBe(100);
   });
 });
 

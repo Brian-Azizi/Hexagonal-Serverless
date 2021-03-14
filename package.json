@@ -18,6 +18,7 @@
     "@types/node": "^14.14.26",
     "@types/uuid": "^8.3.0",
     "jest": "^26.6.3",
+    "prettier": "^2.2.1",
     "serverless": "^2.23.0",
     "serverless-offline": "^6.8.0",
     "serverless-plugin-typescript": "^1.1.9",

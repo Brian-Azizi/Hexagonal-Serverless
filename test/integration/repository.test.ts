@@ -114,10 +114,12 @@ describe("DynamoProductRepository", () => {
     const product = await repo.get(sku);
 
     expect(product).toBeDefined();
+    if (!product) fail();
     expect(product.sku).toBe("VELVET-SOFA");
     expect(product.batches.length).toBe(2);
 
     const batch1 = product.batches.find((batch) => batch.reference === ref1);
+    if (!batch1) fail();
     expect(batch1.reference).toBe(ref1);
     expect(batch1.purchasedQuantity).toBe(20);
     expect(batch1.eta).toBeUndefined();
@@ -126,6 +128,7 @@ describe("DynamoProductRepository", () => {
     );
 
     const batch2 = product.batches.find((batch) => batch.reference === ref2);
+    if (!batch2) fail();
     expect(batch2.reference).toBe(ref2);
     expect(batch2.purchasedQuantity).toBe(26);
     expect(batch2.eta).toEqual(new Date("2021-12-02"));
@@ -148,7 +151,7 @@ describe("DynamoProductRepository", () => {
 
     it("fails when allocating two lines at the same time", async () => {
       const [order1, order2] = ["order1", "order2"];
-      const exceptions = [];
+      const exceptions: Error[] = [];
       await Promise.all([
         tryToAllocate(order1, sku, exceptions),
         tryToAllocate(order2, sku, exceptions),
@@ -156,6 +159,7 @@ describe("DynamoProductRepository", () => {
 
       const repo = new DynamoProductRepository(docClient);
       const product = await repo.get(sku);
+      if (!product) fail();
       expect(product.version).toBe(2);
       expect(exceptions.length).toBe(1);
       expect(exceptions[0]).toContain("ABCE");
@@ -172,6 +176,7 @@ async function tryToAllocate(
   try {
     const repo = new DynamoProductRepository(new DynamoDbDocumentClient());
     const product = await repo.get(sku);
+    if (!product) fail();
     product.allocate(line);
     await new Promise((resolve) => setTimeout(resolve, 2000));
     await repo.add(product);

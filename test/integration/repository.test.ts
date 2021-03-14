@@ -154,7 +154,7 @@ describe("DynamoProductRepository", () => {
       const exceptions: Error[] = [];
       await Promise.all([
         tryToAllocate(order1, sku, exceptions),
-        tryToAllocate(order2, sku, exceptions),
+        tryToAllocate(order2, sku, exceptions, true),
       ]);
 
       const repo = new DynamoProductRepository(docClient);
@@ -163,6 +163,12 @@ describe("DynamoProductRepository", () => {
       expect(product.version).toBe(2);
       expect(exceptions.length).toBe(1);
       expect(exceptions[0]).toBe("TransactionCanceledException");
+      const orders = product.batches
+        .map((b) => b.allocations)
+        .reduce((prev, curr) => new Set([...prev, ...curr]), new Set());
+      expect(orders.size).toBe(1);
+      const order = orders.values().next().value;
+      expect(order.orderId).toBe(order1);
     });
   });
 });
@@ -170,8 +176,11 @@ describe("DynamoProductRepository", () => {
 async function tryToAllocate(
   orderId: string,
   sku: string,
-  exceptions: Error[]
+  exceptions: Error[],
+  withDelay: boolean = false
 ) {
+  if (withDelay) await new Promise((resolve) => setTimeout(resolve, 1000));
+
   const line = new OrderLine(orderId, sku, 10);
   try {
     const repo = new DynamoProductRepository(new DynamoDbDocumentClient());

@@ -54,6 +54,7 @@ describe("Allocate service", () => {
     await services.allocate(repo)("oref", "RETRO-CLOCK", 10);
 
     const product = await repo.get("RETRO-CLOCK");
+    if (!product) fail();
     expect(
       product.batches.find((batch) => batch.reference === "in-stock-batch")
         .availableQuantity

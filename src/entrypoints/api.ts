@@ -19,7 +19,7 @@ export const allocate: Handler = async (event: APIGatewayProxyEvent) => {
     );
   } catch (e) {
     if (e instanceof OutOfStockError || e instanceof services.InvalidSkuError) {
-      return await {
+      return {
         statusCode: 400,
         body: JSON.stringify({
           message: e.message,

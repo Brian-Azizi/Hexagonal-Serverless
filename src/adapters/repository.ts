@@ -31,20 +31,6 @@ export class DynamoProductRepository implements AbstractProductRepository {
     await this.documentClient
       .transactWrite({
         TransactItems: [
-          // {
-          //   ConditionCheck: {
-          //     TableName: this.TABLE_NAME,
-          //     Key: {
-          //       PK: product.sku,
-          //       SK: `PRODUCT`,
-          //     },
-          //     ConditionExpression:
-          //       "(attribute_not_exists(Version)) OR (Version < :version)",
-          //     ExpressionAttributeValues: {
-          //       ":version": product.version,
-          //     },
-          //   },
-          // },
           {
             Put: {
               TableName: this.TABLE_NAME,
@@ -109,9 +95,7 @@ export class DynamoProductRepository implements AbstractProductRepository {
     }
 
     const batches = batchRows.map(this.createBatchFromDynamoItem);
-    const product = new Product(productRow.Sku, batches, productRow.Version);
-
-    return product;
+    return new Product(productRow.Sku, batches, productRow.Version);
   }
 
   private createBatchFromDynamoItem = (item: DynamoBatch): Batch => {

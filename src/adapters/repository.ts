@@ -29,38 +29,57 @@ export class DynamoProductRepository implements AbstractProductRepository {
 
   public async add(product: Product): Promise<void> {
     await this.documentClient
-      .batchWrite({
-        RequestItems: {
-          [this.TABLE_NAME]: [
-            {
-              PutRequest: {
-                Item: {
-                  PK: product.sku,
-                  SK: `PRODUCT`,
-                  Sku: product.sku,
-                  Version: product.version,
-                },
+      .transactWrite({
+        TransactItems: [
+          // {
+          //   ConditionCheck: {
+          //     TableName: this.TABLE_NAME,
+          //     Key: {
+          //       PK: product.sku,
+          //       SK: `PRODUCT`,
+          //     },
+          //     ConditionExpression:
+          //       "(attribute_not_exists(Version)) OR (Version < :version)",
+          //     ExpressionAttributeValues: {
+          //       ":version": product.version,
+          //     },
+          //   },
+          // },
+          {
+            Put: {
+              TableName: this.TABLE_NAME,
+              Item: {
+                PK: product.sku,
+                SK: `PRODUCT`,
+                Sku: product.sku,
+                Version: product.version,
+              },
+              ConditionExpression:
+                "(attribute_not_exists(Version)) OR (Version < :version)",
+              ExpressionAttributeValues: {
+                ":version": product.version,
               },
             },
-            ...product.batches.map((batch) => ({
-              PutRequest: {
-                Item: {
-                  PK: batch.sku,
-                  SK: `BATCH#${batch.reference}`,
-                  Reference: batch.reference,
-                  Sku: batch.sku,
-                  PurchasedQuantity: batch.purchasedQuantity,
-                  Eta: batch.eta?.toISOString().split("T")[0] || "NONE",
-                  Allocations: Array.from(batch.allocations).map((line) => ({
-                    OrderId: line.orderId,
-                    Sku: line.sku,
-                    Quantity: line.quantity,
-                  })),
-                },
+          },
+          ...product.batches.map((batch) => ({
+            Put: {
+              TableName: this.TABLE_NAME,
+              Item: {
+                PK: batch.sku,
+                SK: `BATCH#${batch.reference}`,
+                Reference: batch.reference,
+                Sku: batch.sku,
+                PurchasedQuantity: batch.purchasedQuantity,
+                Eta: batch.eta?.toISOString().split("T")[0] || "NONE",
+                Allocations: Array.from(batch.allocations).map((line) => ({
+                  OrderId: line.orderId,
+                  Sku: line.sku,
+                  Quantity: line.quantity,
+                })),
               },
-            })),
-          ],
-        },
+            },
+          })),
+        ],
       })
       .promise();
   }

@@ -162,7 +162,7 @@ describe("DynamoProductRepository", () => {
       if (!product) fail();
       expect(product.version).toBe(2);
       expect(exceptions.length).toBe(1);
-      expect(exceptions[0]).toContain("ABCE");
+      expect(exceptions[0]).toBe("TransactionCanceledException");
     });
   });
 });
@@ -181,6 +181,6 @@ async function tryToAllocate(
     await new Promise((resolve) => setTimeout(resolve, 2000));
     await repo.add(product);
   } catch (e) {
-    exceptions.push(e);
+    exceptions.push(e.code);
   }
 }

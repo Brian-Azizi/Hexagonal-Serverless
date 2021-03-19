@@ -72,4 +72,13 @@ describe("Add batch service", () => {
     await services.addBatch(repo)("b1", "CRUNCHY-ARMCHAIR", 100, undefined);
     expect((await repo.get("CRUNCHY-ARMCHAIR")).batches).toBeDefined();
   });
+
+  it("adds a batch to an existing product", async () => {
+    const repo = new FakeProductRepository();
+    await services.addBatch(repo)("b1", "CRUNCHY-ARMCHAIR", 100, undefined);
+    await services.addBatch(repo)("b2", "CRUNCHY-ARMCHAIR", 99, undefined);
+    expect(
+      (await repo.get("CRUNCHY-ARMCHAIR")).batches.map((b) => b.reference)
+    ).toContain("b2");
+  });
 });

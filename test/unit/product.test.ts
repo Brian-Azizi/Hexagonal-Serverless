@@ -5,6 +5,7 @@ import {
   OutOfStockError,
 } from "../../src/domain/model";
 import { later, today, tomorrow } from "../utils";
+import exp = require("constants");
 
 describe("allocate", () => {
   it("prefers earlier batches", () => {
@@ -61,5 +62,15 @@ describe("allocate", () => {
       expect(e).toBeInstanceOf(OutOfStockError);
       expect(e.message).toContain("SMALL-FORK");
     }
+  });
+
+  it("increments version number", () => {
+    const batch = new Batch("shipment-batch", "HIGHBROW-POSTER", 100);
+    const product = new Product("HIGHBROW-POSTER", [batch], 7);
+    const line = new OrderLine("o1", "HIGHBROW-POSTER", 10);
+
+    product.allocate(line);
+
+    expect(product.version).toBe(8);
   });
 });

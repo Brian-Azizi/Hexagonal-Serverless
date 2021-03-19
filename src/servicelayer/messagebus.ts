@@ -1,21 +1,23 @@
 import { Event, EventTypes, OutOfStockEvent } from "../domain/events";
 import { sendEmail } from "../adapters/email";
 
-const sendOutOfStockNotification = (event: OutOfStockEvent) => {
-  sendEmail("stock@made.com", `Out of stock for ${event.sku}`);
-};
-
 type Handler = (event: Event) => void;
 type Handlers = {
   [type in EventTypes]: Handler[];
 };
 
-const HANDLERS: Handlers = {
-  [EventTypes.OutOfStock]: [sendOutOfStockNotification],
+const sendOutOfStockNotification: Handler = (event: OutOfStockEvent) => {
+  sendEmail("stock@made.com", `Out of stock for ${event.sku}`);
 };
 
-export function handle(event: Event): void {
-  for (let handler of HANDLERS[event.type]) {
-    handler(event);
+export class Messagebus {
+  HANDLERS: Handlers = {
+    [EventTypes.OutOfStock]: [sendOutOfStockNotification],
+  };
+
+  handle(event: Event): void {
+    for (let handler of this.HANDLERS[event.type]) {
+      handler(event);
+    }
   }
 }

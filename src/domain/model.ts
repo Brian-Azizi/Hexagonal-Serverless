@@ -21,6 +21,8 @@ export class Product {
   }
 
   allocate = (line: OrderLine): Batch => {
+    this.version++;
+
     const batch = this.batches
       .filter((b) => b.canAllocate(line))
       .sort(Batch.sortByEta)[0];
@@ -31,7 +33,6 @@ export class Product {
     }
 
     batch.allocate(line);
-    this.version++;
     return batch;
   };
 

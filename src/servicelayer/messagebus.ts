@@ -11,13 +11,15 @@ const sendOutOfStockNotification: Handler = (event: OutOfStockEvent) => {
 };
 
 export class Messagebus {
-  HANDLERS: Handlers = {
+  private HANDLERS: Handlers = {
     [EventTypes.OutOfStock]: [sendOutOfStockNotification],
   };
 
-  handle(event: Event): void {
-    for (let handler of this.HANDLERS[event.type]) {
-      handler(event);
+  public handle(events: Event[]): void {
+    for (let event of events) {
+      for (let handler of this.HANDLERS[event.type]) {
+        handler(event);
+      }
     }
   }
 }

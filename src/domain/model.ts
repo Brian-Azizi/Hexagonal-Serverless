@@ -1,3 +1,5 @@
+import { Event, outOfStockEvent } from "./events";
+
 export class OrderLine {
   public constructor(
     readonly orderId: string,
@@ -10,6 +12,7 @@ export class Product {
   public readonly sku: string;
   public batches: Batch[];
   public version: number;
+  public events: Event[] = [];
 
   constructor(sku: string, batches: Batch[], version: number = 1) {
     this.sku = sku;
@@ -18,16 +21,18 @@ export class Product {
   }
 
   allocate = (line: OrderLine): Batch => {
+    this.version++;
+
     const batch = this.batches
       .filter((b) => b.canAllocate(line))
       .sort(Batch.sortByEta)[0];
 
     if (batch === undefined) {
-      throw new OutOfStockError(`Out of stock for sku ${line.sku}`);
+      this.events.push(outOfStockEvent(line.sku));
+      return batch;
     }
 
     batch.allocate(line);
-    this.version++;
     return batch;
   };
 

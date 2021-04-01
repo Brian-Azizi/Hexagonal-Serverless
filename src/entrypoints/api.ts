@@ -1,6 +1,5 @@
 import { APIGatewayProxyEvent, Handler } from "aws-lambda";
 import { DynamoDbDocumentClient } from "../adapters/documentClient";
-import { OutOfStockError } from "../domain/model";
 import { DynamoProductRepository } from "../adapters/repository";
 import * as services from "../servicelayer/services";
 
@@ -18,7 +17,7 @@ export const allocate: Handler = async (event: APIGatewayProxyEvent) => {
       requestData["quantity"]
     );
   } catch (e) {
-    if (e instanceof OutOfStockError || e instanceof services.InvalidSkuError) {
+    if (e instanceof services.InvalidSkuError) {
       return {
         statusCode: 400,
         body: JSON.stringify({

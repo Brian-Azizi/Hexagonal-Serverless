@@ -1,11 +1,5 @@
-import {
-  Product,
-  Batch,
-  OrderLine,
-  OutOfStockError,
-} from "../../src/domain/model";
+import { Product, Batch, OrderLine } from "../../src/domain/model";
 import { later, today, tomorrow } from "../utils";
-import exp = require("constants");
 
 describe("allocate", () => {
   it("prefers earlier batches", () => {
@@ -50,27 +44,25 @@ describe("allocate", () => {
     expect(allocation).toBe(inStockBatch);
   });
 
-  it("throws an OutOfStockError if it cannot allocate", () => {
-    const batch = new Batch("batch1", "SMALL-FORK", 10, today());
-    const product = new Product("SMALL-FORK", [batch]);
-    product.allocate(new OrderLine("order1", "SMALL-FORK", 10));
-
-    expect.assertions(2);
-    try {
-      product.allocate(new OrderLine("order1", "SMALL-FORK", 10));
-    } catch (e) {
-      expect(e).toBeInstanceOf(OutOfStockError);
-      expect(e.message).toContain("SMALL-FORK");
-    }
-  });
-
   it("increments version number", () => {
-    const batch = new Batch("shipment-batch", "HIGHBROW-POSTER", 100);
+    const batch = new Batch("batch", "HIGHBROW-POSTER", 100);
     const product = new Product("HIGHBROW-POSTER", [batch], 7);
     const line = new OrderLine("o1", "HIGHBROW-POSTER", 10);
 
     product.allocate(line);
-
     expect(product.version).toBe(8);
+  });
+
+  it("records an OutOfStock event if cannot allocate", () => {
+    const product = new Product("SMALL-FORK", [
+      new Batch("batch", "HIGHBROW-POSTER", 10, today()),
+    ]);
+    product.allocate(new OrderLine("order1", "SMALL-FORK", 10));
+
+    const batch = product.allocate(new OrderLine("order1", "SMALL-FORK", 1));
+
+    const event = product.events.slice(-1)[0];
+    expect(event.type).toBe("OutOfStock");
+    expect(event.sku).toBe("SMALL-FORK");
   });
 });

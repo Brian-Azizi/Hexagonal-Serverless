@@ -1,5 +1,8 @@
 import { AbstractProductRepository } from "../adapters/repository";
 import * as model from "../domain/model";
+import { Messagebus } from "./messagebus";
+
+const messageBus = new Messagebus();
 
 export class InvalidSkuError extends Error {
   public readonly rootError?: Error;
@@ -24,7 +27,7 @@ export const allocate = (repo: AbstractProductRepository) => async (
   const line = new model.OrderLine(orderId, sku, quantity);
   const batch = product.allocate(line);
   await repo.add(product);
-
+  messageBus.handle(product.events);
   return batch.reference;
 };
 
